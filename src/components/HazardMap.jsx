@@ -69,7 +69,11 @@ const HazardMap = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`$(import.meta.env.VITE_API_URL || "http://localhost:5000")/api/admin-tools/hazards/${id}`);
+      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const token = localStorage.getItem('token');
+      await axios.delete(`${baseUrl}/api/admin-tools/hazards/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setHazards(hazards.filter(h => h._id !== id));
     } catch (err) { console.error(err); }
   };

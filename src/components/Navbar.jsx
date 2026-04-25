@@ -23,11 +23,7 @@ const Navbar = () => {
 
             {user && (
               <div className="hidden md:flex items-center gap-4">
-                <Link to="/dashboard" className="text-sm font-bold text-gray-500 hover:text-red-600 flex items-center gap-1">
-                  <LayoutDashboard className="w-4 h-4" /> Dept Console
-                </Link>
-
-                {user.role === 'admin' && (
+                {user.role === 'admin' ? (
                   <>
                     <Link to="/admin" className="text-sm font-bold text-gray-500 hover:text-red-600 flex items-center gap-1">
                       <LayoutDashboard className="w-4 h-4" /> Operations
@@ -39,6 +35,10 @@ const Navbar = () => {
                       <Users className="w-4 h-4" /> Staff
                     </Link>
                   </>
+                ) : (
+                  <Link to="/dashboard" className="text-sm font-bold text-gray-500 hover:text-red-600 flex items-center gap-1">
+                    <LayoutDashboard className="w-4 h-4" /> Dept Console
+                  </Link>
                 )}
                 
                 <Link to="/profile" className="text-sm font-bold text-gray-500 hover:text-red-600 flex items-center gap-1">

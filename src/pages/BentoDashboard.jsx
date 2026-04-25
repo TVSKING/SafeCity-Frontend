@@ -277,31 +277,29 @@ const BentoDashboard = () => {
             ))}
 
           </div>
-        </div>
-
-        {/* Resource Marketplace Preview */}
+        </div>        {/* Volunteer Management Preview */}
         <div className="md:col-span-2 lg:col-span-2 bg-gray-800/50 backdrop-blur-xl border border-white/5 rounded-[3rem] p-8 flex flex-col">
            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-            <Package className="text-orange-500" /> Crisis Marketplace
+            <Users className="text-blue-500" /> Community Responders
           </h3>
           <div className="flex-1 space-y-3 overflow-hidden">
-             {marketplaceItems.length === 0 && <p className="text-gray-500 text-xs text-center mt-10">No items available.</p>}
-             {marketplaceItems.map((m, i) => (
-               <div key={i} className="p-3 bg-white/5 rounded-xl flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-bold">{m.resourceName}</p>
-                    <p className="text-[10px] text-gray-500">{m.ownerName}</p>
-                  </div>
-                  <span className={`text-[8px] font-black uppercase px-2 py-1 rounded-md ${m.availability === 'Available' ? 'text-green-400 bg-green-400/10' : 'text-orange-400 bg-orange-400/10'}`}>
-                    {m.availability}
-                  </span>
-               </div>
-             ))}
+             <div className="p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20">
+                <p className="text-2xl font-black text-blue-400">{stats.volunteers}</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Verified Personnel</p>
+             </div>
+             <div className="p-4 bg-white/5 rounded-2xl">
+                <p className="text-xs font-bold text-gray-300">Ready for Deployment</p>
+                <div className="flex gap-1 mt-2">
+                   {[1,2,3,4,5].map(i => (
+                     <div key={i} className="w-6 h-6 rounded-full bg-blue-600/30 border border-blue-500/50 flex items-center justify-center text-[8px] font-bold text-blue-300">V</div>
+                   ))}
+                </div>
+             </div>
           </div>
-          <button onClick={() => navigate('/collaboration')} className="mt-4 w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-black uppercase tracking-widest transition-all">
-             View Full Inventory
+          <button onClick={() => navigate('/admin')} className="mt-4 w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-black uppercase tracking-widest transition-all">
+             Manage Responders
           </button>
-        </div>
+        </div>div>
 
         {/* Bot / Automation Card */}
         <button 
