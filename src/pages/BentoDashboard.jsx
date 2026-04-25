@@ -299,7 +299,7 @@ const BentoDashboard = () => {
           <button onClick={() => navigate('/admin')} className="mt-4 w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-black uppercase tracking-widest transition-all">
              Manage Responders
           </button>
-        </div>div>
+        </div>
 
         {/* Bot / Automation Card */}
         <button 
