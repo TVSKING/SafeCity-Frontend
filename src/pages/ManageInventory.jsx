@@ -26,28 +26,28 @@ const ManageInventory = () => {
 
   const departmentOptions = {
     ambulance: [
-      { name: 'Ambulance', unit: 'vehicles', category: 'Fleet', initial: 12 },
-      { name: 'Medical Kits', unit: 'kits', category: 'Supplies', initial: 350 },
-      { name: 'Oxygen Cylinders', unit: 'cylinders', category: 'Medical', initial: 150 },
-      { name: 'Stretchers', unit: 'units', category: 'Equipment', initial: 40 },
-      { name: 'Paramedic Teams', unit: 'teams', category: 'Personnel', initial: 25 },
-      { name: 'Mobile ICU', unit: 'vehicles', category: 'Fleet', initial: 5 }
+      { name: 'Ambulance', unit: 'vehicles', category: 'Fleet' },
+      { name: 'Medical Kits', unit: 'kits', category: 'Supplies' },
+      { name: 'Oxygen Cylinders', unit: 'cylinders', category: 'Medical' },
+      { name: 'Stretchers', unit: 'units', category: 'Equipment' },
+      { name: 'Paramedic Teams', unit: 'teams', category: 'Personnel' },
+      { name: 'Mobile ICU', unit: 'vehicles', category: 'Fleet' }
     ],
     fire: [
-      { name: 'Fire Trucks', unit: 'vehicles', category: 'Fleet', initial: 10 },
-      { name: 'Water Tankers', unit: 'tankers', category: 'Fleet', initial: 15 },
-      { name: 'Fire Extinguishers', unit: 'units', category: 'Supplies', initial: 200 },
-      { name: 'Rescue Ladders', unit: 'ladders', category: 'Equipment', initial: 20 },
-      { name: 'Search Dogs', unit: 'dogs', category: 'Personnel', initial: 12 },
-      { name: 'Helicopters', unit: 'vehicles', category: 'Fleet', initial: 3 }
+      { name: 'Fire Trucks', unit: 'vehicles', category: 'Fleet' },
+      { name: 'Water Tankers', unit: 'tankers', category: 'Fleet' },
+      { name: 'Fire Extinguishers', unit: 'units', category: 'Supplies' },
+      { name: 'Rescue Ladders', unit: 'ladders', category: 'Equipment' },
+      { name: 'Search Dogs', unit: 'dogs', category: 'Personnel' },
+      { name: 'Helicopters', unit: 'vehicles', category: 'Fleet' }
     ],
     police: [
-      { name: 'Police Cars', unit: 'vehicles', category: 'Fleet', initial: 45 },
-      { name: 'Barricades', unit: 'units', category: 'Equipment', initial: 100 },
-      { name: 'Riot Gear', unit: 'sets', category: 'Equipment', initial: 80 },
-      { name: 'Surveillance Drones', unit: 'drones', category: 'Tech', initial: 15 },
-      { name: 'Traffic Cones', unit: 'units', category: 'Equipment', initial: 300 },
-      { name: 'Swat Teams', unit: 'teams', category: 'Personnel', initial: 10 }
+      { name: 'Police Cars', unit: 'vehicles', category: 'Fleet' },
+      { name: 'Barricades', unit: 'units', category: 'Equipment' },
+      { name: 'Riot Gear', unit: 'sets', category: 'Equipment' },
+      { name: 'Surveillance Drones', unit: 'drones', category: 'Tech' },
+      { name: 'Traffic Cones', unit: 'units', category: 'Equipment' },
+      { name: 'Swat Teams', unit: 'teams', category: 'Personnel' }
     ]
   };
 
@@ -77,20 +77,6 @@ const ManageInventory = () => {
   useEffect(() => {
     fetchResources();
   }, [user]);
-  const handleAddResource = async (e) => {
-    e.preventDefault();
-    if (!quantity) return;
-
-    let name, unit;
-    if (isCustom) {
-      if (!customName || !customUnit) return;
-      name = sanitizeInput(customName, 'text');
-      unit = sanitizeInput(customUnit, 'text');
-    } else {
-      const selected = currentOptions[selectedResourceIdx];
-      name = selected.name;
-      unit = selected.unit;
-    }
 
     const isRoutine = parseInt(quantity) < 50 && !isCustom;
     const cost = isRoutine ? 0 : 50;
@@ -164,7 +150,7 @@ const ManageInventory = () => {
     }
   };
 
-  // Merged Ledger: Database items + Missing standard items with tiered defaults
+  // Merged Ledger: Database items + Missing standard items as 0
   const allResourcesMerged = currentOptions.map(opt => {
     const existing = resources.find(r => r.name === opt.name);
     if (existing) return existing;
@@ -172,7 +158,7 @@ const ManageInventory = () => {
       _id: `virtual_${opt.name.replace(/\s+/g, '_')}`,
       name: opt.name,
       unit: opt.unit,
-      quantity: opt.initial || 0,
+      quantity: 0,
       departmentType: user.departmentType,
       lastUpdated: Date.now(),
       isVirtual: true
