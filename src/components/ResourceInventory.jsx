@@ -193,30 +193,37 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
                   </div>
                 )}
                 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className={`font-black tracking-tight ${isOutOfStock ? 'text-red-600' : isLow ? 'text-red-900' : 'text-gray-900'}`}>{resource.name}</p>
-                    <div className="flex items-center gap-2">
-                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{resource.unit}</p>
-                       {isOutOfStock && <span className="text-[8px] font-black text-red-600 bg-red-100 px-1.5 py-0.5 rounded animate-pulse">OUT OF STOCK</span>}
+                <div className="flex flex-col gap-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className={`text-lg font-black tracking-tight leading-tight ${isOutOfStock ? 'text-red-600' : isLow ? 'text-red-900' : 'text-gray-900'}`}>{resource.name}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{resource.unit}</p>
+                         {isOutOfStock && <span className="text-[8px] font-black text-red-600 bg-red-100 px-2 py-0.5 rounded-full animate-pulse tracking-tighter">OUT OF STOCK</span>}
+                         {isLow && !isOutOfStock && <span className="text-[8px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-full tracking-tighter uppercase">Low Stock</span>}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                     <div className="flex items-center bg-white rounded-xl p-1 shadow-sm border border-gray-100">
-                        <button 
-                          onClick={() => updateQuantity(resource, resource.quantity - 1)}
-                          className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                        >
-                          <Minus size={14} />
-                        </button>
-                        <span className={`px-3 font-black text-sm min-w-[3ch] text-center ${isLow ? 'text-red-600' : 'text-gray-900'}`}>{resource.quantity}</span>
-                        <button 
-                          onClick={() => updateQuantity(resource, resource.quantity + 1)}
-                          className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
-                        >
-                          <Plus size={14} />
-                        </button>
-                     </div>
+                  
+                  <div className="flex items-center gap-3 bg-white/80 backdrop-blur-sm rounded-[1.5rem] p-2 shadow-sm border border-gray-100/50 mt-auto">
+                    <button 
+                      onClick={() => updateQuantity(resource, resource.quantity - 1)}
+                      className="w-12 h-12 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-2xl transition-all active:scale-90"
+                    >
+                      <Minus size={20} />
+                    </button>
+                    
+                    <div className="flex-1 text-center">
+                      <p className={`text-2xl font-black ${isLow ? 'text-red-600' : 'text-gray-900'}`}>{resource.quantity}</p>
+                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none">In Stock</p>
+                    </div>
+
+                    <button 
+                      onClick={() => updateQuantity(resource, resource.quantity + 1)}
+                      className="w-12 h-12 flex items-center justify-center text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-2xl transition-all active:scale-90"
+                    >
+                      <Plus size={20} />
+                    </button>
                   </div>
                 </div>
 

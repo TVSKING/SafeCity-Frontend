@@ -398,7 +398,8 @@ const ManageInventory = () => {
                              <div className="flex justify-between items-start mb-6">
                                 <div>
                                    <span className="text-[8px] font-black uppercase text-blue-600 bg-blue-50 px-2 py-1 rounded-md mb-2 inline-block tracking-widest">{category}</span>
-                                   <p className="text-xl font-black text-gray-900">{resource.name}</p>
+                                   <p className="text-xl font-black text-gray-900 leading-tight">{resource.name}</p>
+                                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">{resource.unit}</p>
                                 </div>
                                 <button 
                                   onClick={() => !resource.isVirtual && handleDeleteResource(resource._id)}
@@ -408,41 +409,44 @@ const ManageInventory = () => {
                                 </button>
                              </div>
 
-                             <div className="flex items-center gap-4 mb-6">
-                                <div className="flex-1">
-                                   <div className="flex justify-between items-end mb-2">
-                                      <p className="text-2xl font-black text-gray-900 leading-none">{resource.quantity} <span className="text-xs font-bold text-gray-400 uppercase">{resource.unit}</span></p>
-                                      {isOutOfStock ? (
-                                         <span className="text-[10px] font-black text-red-600 flex items-center gap-1 animate-pulse tracking-tighter"><AlertCircle size={10} /> OUT OF STOCK</span>
-                                       ) : isLow ? (
-                                         <span className="text-[10px] font-black text-red-500 flex items-center gap-1"><AlertCircle size={10} /> CRITICAL</span>
-                                       ) : null}
+                             <div className="bg-gray-50/50 rounded-3xl p-4 mb-6 border border-gray-100/50">
+                                <div className="flex justify-between items-end mb-4">
+                                   <div>
+                                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none">Current Stock</p>
+                                      <p className={`text-3xl font-black mt-1 ${isLow ? 'text-red-600' : 'text-gray-900'}`}>{resource.quantity}</p>
                                    </div>
+                                   {isOutOfStock ? (
+                                      <span className="text-[10px] font-black text-red-600 flex items-center gap-1 animate-pulse tracking-tighter bg-red-100 px-2 py-1 rounded-lg mb-1"><AlertCircle size={10} /> OUT OF STOCK</span>
+                                    ) : isLow ? (
+                                      <span className="text-[10px] font-black text-red-500 flex items-center gap-1 bg-red-50 px-2 py-1 rounded-lg mb-1"><AlertCircle size={10} /> CRITICAL</span>
+                                    ) : null}
+                                </div>
+
+                                <div className="flex items-center bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100">
+                                   <button 
+                                      onClick={() => handleUpdateQuantity(resource, -1)}
+                                      className="flex-1 py-3 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all flex justify-center items-center"
+                                   >
+                                      <Minus size={20} />
+                                   </button>
+                                   <div className="w-px h-8 bg-gray-100 mx-2"></div>
+                                   <button 
+                                      onClick={() => handleUpdateQuantity(resource, 1)}
+                                      className="flex-1 py-3 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-xl transition-all flex justify-center items-center"
+                                   >
+                                      <Plus size={20} />
+                                   </button>
                                 </div>
                              </div>
 
-                              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-50">
-                                <div className="flex items-center bg-gray-50 rounded-2xl p-1 shadow-inner">
-                                   <button 
-                                      onClick={() => handleUpdateQuantity(resource, -1)}
-                                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-xl transition-all shadow-sm"
-                                   >
-                                      <Minus size={18} />
-                                   </button>
-                                   <span className="px-4 font-black text-gray-900 text-sm">{resource.quantity}</span>
-                                   <button 
-                                      onClick={() => handleUpdateQuantity(resource, 1)}
-                                      className="p-2 text-gray-400 hover:text-green-600 hover:bg-white rounded-xl transition-all shadow-sm"
-                                   >
-                                      <Plus size={18} />
-                                   </button>
+                             <div className="flex justify-between items-center px-2">
+                                <div className="flex items-center gap-2">
+                                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Audit</p>
                                 </div>
-                                <div className="text-right">
-                                   <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none">Last Audit</p>
-                                   <p className="text-[10px] font-bold text-gray-900 mt-1">
-                                      {resource.isVirtual ? 'NEVER' : new Date(resource.lastUpdated).toLocaleDateString()}
-                                   </p>
-                                </div>
+                                <p className="text-[10px] font-bold text-gray-900">
+                                   {resource.isVirtual ? 'NEVER' : new Date(resource.lastUpdated).toLocaleDateString()}
+                                </p>
                              </div>
                           </motion.div>
                        );
