@@ -8,9 +8,6 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
   const [resources, setResources] = useState([]);
   const [activeHazards, setActiveHazards] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [deployMode, setDeployMode] = useState(null); // stores resource object
-  const [deployQty, setDeployQty] = useState(1);
-  const [selectedHazard, setSelectedHazard] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
 
@@ -80,18 +77,6 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
     fetchHazards();
   }, [departmentType]);
 
-  const handleDeploy = async () => {
-    if (!deployMode || !selectedHazard) return;
-    if (deployQty <= 0 || deployQty > deployMode.quantity) return alert('Invalid quantity');
-    
-    try {
-      await updateQuantity(deployMode._id, deployMode.quantity - deployQty);
-      const hazard = activeHazards.find(h => h._id === selectedHazard);
-      alert(`SUCCESS: Deployed ${deployQty} ${deployMode.unit} of ${deployMode.name} to the ${hazard.type} Zone!`);
-      setDeployMode(null);
-      setDeployQty(1);
-    } catch (err) { alert('Failed to deploy resources'); }
-  };
 
   const updateQuantity = async (resource, newQty) => {
     if (newQty < 0) return;
@@ -232,13 +217,6 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
                           <Plus size={14} />
                         </button>
                      </div>
-                     <button 
-                        onClick={() => setDeployMode(resource)}
-                        className={`w-10 h-10 flex items-center justify-center rounded-xl shadow-lg transition-all active:scale-95 ${isLow ? 'bg-red-600 text-white shadow-red-200' : 'bg-blue-600 text-white shadow-blue-200'}`}
-                        title="Deploy to Hazard Zone"
-                      >
-                        <Send size={14} />
-                      </button>
                   </div>
                 </div>
 
@@ -259,59 +237,6 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
         )}
       </div>
 
-      {/* Deployment Panel */}
-      <AnimatePresence>
-        {deployMode && (
-          <motion.div 
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className="absolute bottom-4 left-4 right-4 z-50 p-6 bg-gray-900 text-white rounded-[2rem] shadow-2xl animate-in fade-in zoom-in"
-          >
-             <div className="flex justify-between items-center mb-5">
-                <h4 className="font-black flex items-center gap-2"><Send size={18} className="text-blue-400" /> DEPLOY ASSET</h4>
-                <button onClick={() => setDeployMode(null)} className="p-2 hover:bg-gray-800 rounded-xl transition-all"><X size={18} /></button>
-             </div>
-             
-             {activeHazards.length === 0 ? (
-               <div className="p-4 bg-red-900/30 border border-red-900/50 rounded-2xl text-xs font-bold text-red-400 flex items-center gap-2">
-                  <AlertTriangle size={16} /> NO ACTIVE HAZARD ZONES
-               </div>
-             ) : (
-               <div className="space-y-5">
-                  <div className="p-4 bg-gray-800 rounded-2xl">
-                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">TARGET ZONE</p>
-                     <select 
-                       className="w-full bg-transparent border-none outline-none font-bold text-sm text-white cursor-pointer"
-                       value={selectedHazard}
-                       onChange={(e) => setSelectedHazard(e.target.value)}
-                     >
-                        {activeHazards.map(h => (
-                          <option key={h._id} value={h._id} className="bg-gray-900">{h.type} Hazard ({h.radius}m)</option>
-                        ))}
-                     </select>
-                  </div>
-                  
-                  <div className="p-4 bg-gray-800 rounded-2xl">
-                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">UNITS TO DEPLOY</p>
-                     <div className="flex items-center justify-between">
-                        <button onClick={() => setDeployQty(Math.max(1, deployQty - 1))} className="p-1 hover:text-blue-400 transition-colors"><Minus size={18} /></button>
-                        <span className="text-xl font-black">{deployQty}</span>
-                        <button onClick={() => setDeployQty(Math.min(deployMode.quantity, deployQty + 1))} className="p-1 hover:text-blue-400 transition-colors"><Plus size={18} /></button>
-                     </div>
-                  </div>
-                  
-                  <button 
-                    onClick={handleDeploy}
-                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black shadow-xl shadow-blue-900/40 transition-all active:scale-95 flex justify-center items-center gap-3"
-                  >
-                    <Send size={18} /> AUTHORIZE DEPLOYMENT
-                  </button>
-               </div>
-             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

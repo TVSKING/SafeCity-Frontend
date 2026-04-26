@@ -17,6 +17,9 @@ const ManageInventory = () => {
   const [stockFilter, setStockFilter] = useState('all'); // all, low, available
   
   // New Resource Form State
+  const [isCustom, setIsCustom] = useState(false);
+  const [customName, setCustomName] = useState('');
+  const [customUnit, setCustomUnit] = useState('');
   const [selectedResourceIdx, setSelectedResourceIdx] = useState(0);
   const [quantity, setQuantity] = useState('');
 
@@ -78,24 +81,35 @@ const ManageInventory = () => {
     e.preventDefault();
     if (!quantity) return;
 
-    const selected = currentOptions[selectedResourceIdx];
+    let name, unit;
+    if (isCustom) {
+      if (!customName || !customUnit) return;
+      name = sanitizeInput(customName, 'text');
+      unit = sanitizeInput(customUnit, 'text');
+    } else {
+      const selected = currentOptions[selectedResourceIdx];
+      name = selected.name;
+      unit = selected.unit;
+    }
 
     try {
       const { data } = await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/resources`, {
-        name: selected.name,
-        unit: selected.unit,
+        name,
+        unit,
         quantity: parseInt(quantity),
         departmentType: user.departmentType,
         lastUpdated: Date.now()
       });
       
       setResources(prev => {
-        const exists = prev.find(r => r._id === data._id);
-        if (exists) return prev.map(r => r._id === data._id ? data : r);
+        const exists = prev.find(r => r.name === data.name);
+        if (exists) return prev.map(r => r.name === data.name ? data : r);
         return [...prev, data];
       });
       
       setQuantity('');
+      setCustomName('');
+      setCustomUnit('');
     } catch (err) {
       alert('Failed to add resource');
     }
@@ -254,18 +268,63 @@ const ManageInventory = () => {
                   <Plus className="text-green-500" /> Register Stock
                </h3>
                <form onSubmit={handleAddResource} className="space-y-6">
-                  <div className="space-y-2">
-                     <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Select Supply Type</label>
-                     <select 
-                        value={selectedResourceIdx} 
-                        onChange={e => setSelectedResourceIdx(parseInt(e.target.value))} 
-                        className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 cursor-pointer appearance-none shadow-inner"
+                  <div className="flex bg-gray-50 p-1 rounded-xl mb-4 border border-gray-100">
+                     <button 
+                       type="button"
+                       onClick={() => setIsCustom(false)}
+                       className={`flex-1 py-2 text-[10px] font-black rounded-lg transition-all ${!isCustom ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400'}`}
                      >
-                        {currentOptions.map((opt, idx) => (
-                           <option key={idx} value={idx}>{opt.name} ({opt.unit})</option>
-                        ))}
-                     </select>
+                        STANDARD LIST
+                     </button>
+                     <button 
+                       type="button"
+                       onClick={() => setIsCustom(true)}
+                       className={`flex-1 py-2 text-[10px] font-black rounded-lg transition-all ${isCustom ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400'}`}
+                     >
+                        MANUAL ENTRY
+                     </button>
                   </div>
+
+                  {!isCustom ? (
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Select Supply Type</label>
+                       <select 
+                          value={selectedResourceIdx} 
+                          onChange={e => setSelectedResourceIdx(parseInt(e.target.value))} 
+                          className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 cursor-pointer appearance-none shadow-inner"
+                       >
+                          {currentOptions.map((opt, idx) => (
+                             <option key={idx} value={idx}>{opt.name} ({opt.unit})</option>
+                          ))}
+                       </select>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Resource Name</label>
+                          <input 
+                             type="text" 
+                             required 
+                             value={customName} 
+                             onChange={e => setCustomName(e.target.value)} 
+                             placeholder="e.g. Specialized Drone"
+                             className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold shadow-inner" 
+                          />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Unit of Measure</label>
+                          <input 
+                             type="text" 
+                             required 
+                             value={customUnit} 
+                             onChange={e => setCustomUnit(e.target.value)} 
+                             placeholder="e.g. units, liters, sets"
+                             className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold shadow-inner" 
+                          />
+                       </div>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                      <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Initial Quantity</label>
                      <input 
