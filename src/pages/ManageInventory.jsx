@@ -15,7 +15,6 @@ const ManageInventory = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [stockFilter, setStockFilter] = useState('all'); // all, low, available
-  const [credits, setCredits] = useState(500); // Initial credits
   
   // New Resource Form State
   const [isCustom, setIsCustom] = useState(false);
@@ -78,10 +77,20 @@ const ManageInventory = () => {
     fetchResources();
   }, [user]);
 
-    const isRoutine = parseInt(quantity) < 50 && !isCustom;
-    const cost = isRoutine ? 0 : 50;
+  const handleAddResource = async (e) => {
+    e.preventDefault();
+    if (!quantity) return;
 
-    if (credits < cost) return alert('Insufficient Logistics Credits for this manual/large request');
+    let name, unit;
+    if (isCustom) {
+      if (!customName || !customUnit) return;
+      name = sanitizeInput(customName, 'text');
+      unit = sanitizeInput(customUnit, 'text');
+    } else {
+      const selected = currentOptions[selectedResourceIdx];
+      name = selected.name;
+      unit = selected.unit;
+    }
 
     try {
       const { data } = await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/resources`, {
@@ -89,8 +98,7 @@ const ManageInventory = () => {
         unit,
         quantity: parseInt(quantity),
         departmentType: user.departmentType,
-        lastUpdated: Date.now(),
-        status: isRoutine ? 'Dispatched' : 'Pending'
+        lastUpdated: Date.now()
       });
       
       setResources(prev => {
@@ -99,16 +107,11 @@ const ManageInventory = () => {
         return [...prev, data];
       });
       
-      if (!isRoutine) setCredits(prev => prev - 50);
       setQuantity('');
       setCustomName('');
       setCustomUnit('');
-      
-      alert(isRoutine 
-        ? `INSTANT DISPATCH: ${quantity} units released from Central Warehouse!` 
-        : `REQUISITION SUBMITTED: Awaiting Admin Approval for ${quantity} units.`);
     } catch (err) {
-      alert('Failed to submit requisition');
+      alert('Failed to add resource');
     }
   };
 
@@ -192,16 +195,9 @@ const ManageInventory = () => {
               <h1 className="text-4xl font-black text-gray-900 tracking-tight flex items-center gap-3">
                 <Archive className="text-blue-600" /> Resource Ledger
               </h1>
-              <div className="flex items-center gap-4 mt-1">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                  <p className="text-gray-500 font-bold text-xs uppercase tracking-widest">{user?.departmentType?.toUpperCase()} LOGISTICS LIVE</p>
-                </div>
-                <div className="h-4 w-px bg-gray-200"></div>
-                <div className="flex items-center gap-2 bg-yellow-50 px-3 py-1 rounded-full border border-yellow-100">
-                  <Zap size={12} className="text-yellow-600 fill-yellow-600" />
-                  <span className="text-[10px] font-black text-yellow-700 uppercase tracking-widest">{credits} CREDITS AVAILABLE</span>
-                </div>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                <p className="text-gray-500 font-bold text-xs uppercase tracking-widest">{user?.departmentType?.toUpperCase()} LOGISTICS LIVE</p>
               </div>
             </div>
           </div>
@@ -341,16 +337,10 @@ const ManageInventory = () => {
                         className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold shadow-inner" 
                      />
                   </div>
-                   <button type="submit" className="w-full py-5 bg-gray-900 text-white rounded-2xl font-black hover:bg-black transition-all shadow-2xl shadow-gray-200 mt-4 active:scale-95 flex items-center justify-center gap-3 group">
-                      <Archive size={20} className="group-hover:scale-110 transition-transform" /> 
-                      {parseInt(quantity) < 50 && !isCustom ? 'INSTANT REQUISITION' : 'SUBMIT FOR APPROVAL'}
-                   </button>
-                   <p className="text-[9px] font-bold text-gray-400 text-center uppercase tracking-tighter">
-                      {parseInt(quantity) < 50 && !isCustom 
-                        ? '✨ Routine request will be auto-dispatched (0 CR)' 
-                        : '⚠️ Manual/Large request requires Admin Review (50 CR)'}
-                   </p>
-                </form>
+                  <button type="submit" className="w-full py-5 bg-gray-900 text-white rounded-2xl font-black hover:bg-black transition-all shadow-2xl shadow-gray-200 mt-4 active:scale-95 flex items-center justify-center gap-3">
+                     <Archive size={20} /> AUTHORIZE ENTRY
+                  </button>
+               </form>
             </div>
           </div>
 
