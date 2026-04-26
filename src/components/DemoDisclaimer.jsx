@@ -8,7 +8,7 @@ const DemoDisclaimer = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(false);
-    }, 4000);
+    }, 6000);
 
     return () => clearTimeout(timer);
   }, []);
@@ -50,7 +50,7 @@ const DemoDisclaimer = () => {
             <motion.div 
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
-              transition={{ duration: 4, ease: "linear" }}
+              transition={{ duration: 6, ease: "linear" }}
               className="absolute bottom-0 left-0 right-0 h-1 bg-indigo-600/30 origin-left"
             />
           </div>
