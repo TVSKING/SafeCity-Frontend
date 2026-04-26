@@ -48,15 +48,6 @@ const ManageInventory = () => {
       { name: 'Surveillance Drones', unit: 'drones', category: 'Tech', initial: 15 },
       { name: 'Traffic Cones', unit: 'units', category: 'Equipment', initial: 300 },
       { name: 'Swat Teams', unit: 'teams', category: 'Personnel', initial: 10 }
-    ],
-    other: [
-      { name: 'Supply Trucks', unit: 'vehicles', category: 'Fleet', initial: 15 },
-      { name: 'Generators', unit: 'units', category: 'Power', initial: 20 },
-      { name: 'Mobile Kitchen', unit: 'units', category: 'Food', initial: 5 },
-      { name: 'Large Tents', unit: 'tents', category: 'Shelter', initial: 50 },
-      { name: 'Relief Teams', unit: 'teams', category: 'Personnel', initial: 30 },
-      { name: 'Food Rations', unit: 'boxes', category: 'Food', initial: 1000 },
-      { name: 'Water Cases', unit: 'cases', category: 'Water', initial: 2000 }
     ]
   };
 
@@ -86,22 +77,6 @@ const ManageInventory = () => {
   useEffect(() => {
     fetchResources();
   }, [user]);
-
-  const handleAddResource = async (e) => {
-    e.preventDefault();
-    if (!quantity) return;
-
-    let name, unit;
-    if (isCustom) {
-      if (!customName || !customUnit) return;
-      name = sanitizeInput(customName, 'text');
-      unit = sanitizeInput(customUnit, 'text');
-    } else {
-      const selected = currentOptions[selectedResourceIdx];
-      if (!selected) return;
-      name = selected.name;
-      unit = selected.unit;
-    }
 
     const isRoutine = parseInt(quantity) < 50 && !isCustom;
     const cost = isRoutine ? 0 : 50;

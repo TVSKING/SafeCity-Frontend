@@ -28,14 +28,6 @@ const AdminDashboard = () => {
   const [activeBroadcasts, setActiveBroadcasts] = useState([]);
   const [pulseTitle, setPulseTitle] = useState('');
   const [pulseArea, setPulseArea] = useState('');
-  const [globalLogistics, setGlobalLogistics] = useState([]);
-  const [logisticsRequests, setLogisticsRequests] = useState([]);
-  const [departmentCredits, setDepartmentCredits] = useState({
-    police: 500,
-    fire: 500,
-    ambulance: 500,
-    other: 500
-  });
 
   useEffect(() => {
     fetchAlerts();
@@ -43,7 +35,6 @@ const AdminDashboard = () => {
     fetchSafetyChecks();
     fetchPendingItems();
     fetchActiveBroadcasts();
-    fetchLogisticsData();
     socket.on('newAlert', (newAlert) => setAlerts(prev => [newAlert, ...prev]));
     socket.on('alertUpdated', (updatedAlert) => setAlerts(prev => prev.map(a => a._id === updatedAlert._id ? updatedAlert : a)));
     socket.on('newSafetyCheck', (newCheck) => setSafetyChecks(prev => [newCheck, ...prev]));
@@ -78,14 +69,6 @@ const AdminDashboard = () => {
     try {
       const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin-tools/broadcasts`);
       setActiveBroadcasts(data);
-    } catch (err) { console.error(err); }
-  };
-
-  const fetchLogisticsData = async () => {
-    try {
-      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-      const { data: supply } = await axios.get(`${baseUrl}/api/resources/all`);
-      setGlobalLogistics(supply);
     } catch (err) { console.error(err); }
   };
 
@@ -332,7 +315,6 @@ const AdminDashboard = () => {
                             <option value="police">POLICE DEPT</option>
                             <option value="fire">FIRE DEPT</option>
                             <option value="ambulance">MEDICAL UNITS</option>
-                            <option value="other">LOGISTICS DEPT</option>
                           </select>
                         </td>
                         <td className="px-8 py-6 text-right">
