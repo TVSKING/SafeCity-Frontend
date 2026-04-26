@@ -3,6 +3,7 @@ import axios from 'axios';
 import MapSelector from './MapSelector';
 import AITriage from './AITriage';
 import { Send, Phone, User as UserIcon, MessageSquare, AlertTriangle, CheckCircle2, Bot, Image as ImageIcon, Mic, Zap, Languages, Activity, MapPin } from 'lucide-react';
+import { sanitizeInput } from '../utils/validation';
 
 const EmergencyForm = () => {
   const [formData, setFormData] = useState({
@@ -167,14 +168,14 @@ const EmergencyForm = () => {
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Full Name</label>
               <div className="relative">
                 <UserIcon className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <input required type="text" placeholder="John Doe" className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-sm font-bold" value={formData.reporterName} onChange={(e) => setFormData({ ...formData, reporterName: e.target.value })} />
+                <input required type="text" placeholder="John Doe" className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-sm font-bold" value={formData.reporterName} onChange={(e) => setFormData({ ...formData, reporterName: sanitizeInput(e.target.value, 'text') })} />
               </div>
             </div>
             <div className="relative">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Phone</label>
               <div className="relative">
                 <Phone className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <input required type="tel" placeholder="+91 ..." className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-sm font-bold" value={formData.reporterPhone} onChange={(e) => setFormData({ ...formData, reporterPhone: e.target.value })} />
+                <input required type="tel" placeholder="+91 ..." className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-sm font-bold" value={formData.reporterPhone} onChange={(e) => setFormData({ ...formData, reporterPhone: sanitizeInput(e.target.value, 'number') })} />
               </div>
             </div>
           </div>

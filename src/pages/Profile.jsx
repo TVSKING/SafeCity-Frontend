@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { User, Mail, MapPin, Phone, FileText, Camera, Save, CheckCircle, KeyRound } from 'lucide-react';
+import { sanitizeInput } from '../utils/validation';
 
 const Profile = () => {
   const { user, login } = useAuth();
@@ -125,7 +126,7 @@ const Profile = () => {
                       type="text" 
                       className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-red-600 font-bold" 
                       value={profile.name}
-                      onChange={(e) => setProfile({...profile, name: e.target.value})}
+                      onChange={(e) => setProfile({...profile, name: sanitizeInput(e.target.value, 'text')})}
                     />
                   </div>
                 </div>
@@ -152,7 +153,7 @@ const Profile = () => {
                       className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-red-600 font-bold" 
                       placeholder="+91 ..."
                       value={profile.phone}
-                      onChange={(e) => setProfile({...profile, phone: e.target.value})}
+                      onChange={(e) => setProfile({...profile, phone: sanitizeInput(e.target.value, 'number')})}
                     />
                   </div>
                 </div>
@@ -167,7 +168,7 @@ const Profile = () => {
                       rows="1"
                       className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-red-600 font-bold resize-none" 
                       value={profile.address}
-                      onChange={(e) => setProfile({...profile, address: e.target.value})}
+                      onChange={(e) => setProfile({...profile, address: sanitizeInput(e.target.value, 'text')})}
                     />
                   </div>
                 </div>

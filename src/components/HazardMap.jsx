@@ -4,6 +4,7 @@ import axios from 'axios';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { AlertTriangle, Plus, X } from 'lucide-react';
+import { sanitizeInput } from '../utils/validation';
 
 // Fix for default marker icons in Leaflet
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -128,7 +129,7 @@ const HazardMap = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="text-xs font-bold text-gray-400 uppercase">Title</label>
-              <input required type="text" className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-red-500" placeholder="e.g. Chemical Spill" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
+              <input required type="text" className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-red-500" placeholder="e.g. Chemical Spill" value={formData.title} onChange={(e) => setFormData({ ...formData, title: sanitizeInput(e.target.value, 'text') })} />
             </div>
             <div>
               <label className="text-xs font-bold text-gray-400 uppercase">Type</label>

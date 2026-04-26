@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Package, Trash2, Plus, Minus, ArrowLeft, Archive, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { sanitizeInput } from '../utils/validation';
 
 const ManageInventory = () => {
   const { user } = useAuth();
@@ -161,7 +162,7 @@ const ManageInventory = () => {
                         min="1"
                         required 
                         value={quantity} 
-                        onChange={e => setQuantity(e.target.value)} 
+                        onChange={e => setQuantity(sanitizeInput(e.target.value, 'number'))} 
                         placeholder="e.g. 50"
                         className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-600 outline-none font-bold" 
                      />

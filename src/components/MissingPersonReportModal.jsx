@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { X, User, MapPin, Phone, MessageSquare, ShieldAlert, Camera, Zap } from 'lucide-react';
+import { sanitizeInput } from '../utils/validation';
 
 const MissingPersonReportModal = ({ isOpen, onClose, onRefresh }) => {
   const [formData, setFormData] = useState({
@@ -82,12 +83,12 @@ const MissingPersonReportModal = ({ isOpen, onClose, onRefresh }) => {
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Person's Name</label>
                 <div className="relative">
                    <User className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
-                   <input required type="text" className="w-full pl-10 pr-4 py-3.5 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-red-600 outline-none font-bold text-sm" placeholder="Full Name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                   <input required type="text" className="w-full pl-10 pr-4 py-3.5 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-red-600 outline-none font-bold text-sm" placeholder="Full Name" value={formData.name} onChange={(e) => setFormData({...formData, name: sanitizeInput(e.target.value, 'text')})} />
                 </div>
               </div>
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Age</label>
-                <input required type="number" className="w-full px-4 py-3.5 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-red-600 outline-none font-bold text-sm" placeholder="e.g. 24" value={formData.age} onChange={(e) => setFormData({...formData, age: e.target.value})} />
+                <input required type="number" className="w-full px-4 py-3.5 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-red-600 outline-none font-bold text-sm" placeholder="e.g. 24" value={formData.age} onChange={(e) => setFormData({...formData, age: sanitizeInput(e.target.value, 'number')})} />
               </div>
             </div>
 
@@ -95,7 +96,7 @@ const MissingPersonReportModal = ({ isOpen, onClose, onRefresh }) => {
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Last Seen Location</label>
               <div className="relative">
                  <MapPin className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
-                 <input required type="text" className="w-full pl-10 pr-4 py-3.5 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-red-600 outline-none font-bold text-sm" placeholder="e.g. Near Metro Station" value={formData.lastSeenLocation} onChange={(e) => setFormData({...formData, lastSeenLocation: e.target.value})} />
+                 <input required type="text" className="w-full pl-10 pr-4 py-3.5 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-red-600 outline-none font-bold text-sm" placeholder="e.g. Near Metro Station" value={formData.lastSeenLocation} onChange={(e) => setFormData({...formData, lastSeenLocation: sanitizeInput(e.target.value, 'text')})} />
               </div>
             </div>
 
@@ -111,7 +112,7 @@ const MissingPersonReportModal = ({ isOpen, onClose, onRefresh }) => {
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Reporter Contact</label>
               <div className="relative">
                  <Phone className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
-                 <input required type="text" className="w-full pl-10 pr-4 py-3.5 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-red-600 outline-none font-bold text-sm" placeholder="Your Phone Number" value={formData.reporterContact} onChange={(e) => setFormData({...formData, reporterContact: e.target.value})} />
+                 <input required type="text" className="w-full pl-10 pr-4 py-3.5 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-red-600 outline-none font-bold text-sm" placeholder="Your Phone Number" value={formData.reporterContact} onChange={(e) => setFormData({...formData, reporterContact: sanitizeInput(e.target.value, 'number')})} />
               </div>
             </div>
 

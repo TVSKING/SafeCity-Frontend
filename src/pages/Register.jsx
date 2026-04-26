@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Shield, Mail, Lock, User, Building, ArrowRight, CheckCircle, MapPin } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
+import { sanitizeInput } from '../utils/validation';
 
 const Register = () => {
   const [formData, setFormData] = useState({ name: '', email: '', password: '', departmentType: 'police', address: '' });
@@ -69,7 +70,7 @@ const Register = () => {
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400">
               <User size={20} />
             </div>
-            <input type="text" required placeholder="Department Name" className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-red-600 outline-none font-bold text-gray-900" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+            <input type="text" required placeholder="Department Name" className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-red-600 outline-none font-bold text-gray-900" value={formData.name} onChange={(e) => setFormData({...formData, name: sanitizeInput(e.target.value, 'text')})} />
           </div>
           <div className="relative">
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400">
@@ -98,7 +99,7 @@ const Register = () => {
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400">
               <MapPin size={20} />
             </div>
-            <input type="text" required placeholder="Official Registered Address" className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-red-600 outline-none font-bold text-gray-900" value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} />
+            <input type="text" required placeholder="Official Registered Address" className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-red-600 outline-none font-bold text-gray-900" value={formData.address} onChange={(e) => setFormData({...formData, address: sanitizeInput(e.target.value, 'text')})} />
           </div>
 
           <button type="submit" disabled={loading} className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black transition-all flex justify-center items-center gap-2 shadow-xl shadow-red-100 disabled:opacity-50 mt-4">

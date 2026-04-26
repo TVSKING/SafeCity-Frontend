@@ -78,10 +78,6 @@ const PublicHazardMap = () => {
         <span className="text-xs font-black text-gray-900 uppercase tracking-widest">Live Hazard Tracking</span>
       </div>
 
-      <div className="absolute bottom-4 right-4 z-[1000] bg-red-600 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-2 animate-bounce">
-        <AlertTriangle size={18} />
-        <span className="font-bold text-sm">NO-GO ZONES ACTIVE</span>
-      </div>
     </div>
   );
 };

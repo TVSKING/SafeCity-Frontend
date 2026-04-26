@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { sanitizeInput } from '../utils/validation';
 
 
 
@@ -344,7 +345,7 @@ const AdminDashboard = () => {
                     rows="4" 
                     placeholder="Enter emergency message..."
                     value={broadcastMessage}
-                    onChange={(e) => setBroadcastMessage(e.target.value)}
+                    onChange={(e) => setBroadcastMessage(sanitizeInput(e.target.value, 'text'))}
                   ></textarea>
                   <button type="submit" className="w-full py-4 bg-red-600 hover:bg-red-700 rounded-2xl font-black transition-all flex items-center justify-center gap-2 shadow-xl shadow-red-900/40">
                      <Radio size={18} /> BROADCAST NOW
@@ -403,11 +404,11 @@ const AdminDashboard = () => {
             <div className="space-y-4">
                <div>
                   <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-1">Pulse Title</label>
-                  <input type="text" placeholder="e.g. Earthquake Safety Check" className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-red-600 outline-none font-bold" value={pulseTitle} onChange={e => setPulseTitle(e.target.value)} />
+                  <input type="text" placeholder="e.g. Earthquake Safety Check" className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-red-600 outline-none font-bold" value={pulseTitle} onChange={e => setPulseTitle(sanitizeInput(e.target.value, 'text'))} />
                </div>
                <div>
                   <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-1">Target Neighborhood</label>
-                  <input type="text" placeholder="e.g. Downtown" className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-red-600 outline-none font-bold" value={pulseArea} onChange={e => setPulseArea(e.target.value)} />
+                  <input type="text" placeholder="e.g. Downtown" className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-red-600 outline-none font-bold" value={pulseArea} onChange={e => setPulseArea(sanitizeInput(e.target.value, 'text'))} />
                </div>
                <button onClick={handleInitiatePulse} className="w-full py-4 bg-red-600 text-white rounded-2xl font-black shadow-xl shadow-red-100 hover:bg-red-700 transition-all flex items-center justify-center gap-2">
                   <Zap size={18} /> INITIATE PULSE
