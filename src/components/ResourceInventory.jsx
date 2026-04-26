@@ -13,28 +13,37 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
 
   const departmentOptions = {
     ambulance: [
-      { name: 'Ambulance', unit: 'vehicles', category: 'Fleet' },
-      { name: 'Medical Kits', unit: 'kits', category: 'Supplies' },
-      { name: 'Oxygen Cylinders', unit: 'cylinders', category: 'Medical' },
-      { name: 'Stretchers', unit: 'units', category: 'Equipment' },
-      { name: 'Paramedic Teams', unit: 'teams', category: 'Personnel' },
-      { name: 'Mobile ICU', unit: 'vehicles', category: 'Fleet' }
+      { name: 'Ambulance', unit: 'vehicles', category: 'Fleet', initial: 12 },
+      { name: 'Medical Kits', unit: 'kits', category: 'Supplies', initial: 350 },
+      { name: 'Oxygen Cylinders', unit: 'cylinders', category: 'Medical', initial: 150 },
+      { name: 'Stretchers', unit: 'units', category: 'Equipment', initial: 40 },
+      { name: 'Paramedic Teams', unit: 'teams', category: 'Personnel', initial: 25 },
+      { name: 'Mobile ICU', unit: 'vehicles', category: 'Fleet', initial: 5 }
     ],
     fire: [
-      { name: 'Fire Trucks', unit: 'vehicles', category: 'Fleet' },
-      { name: 'Water Tankers', unit: 'tankers', category: 'Fleet' },
-      { name: 'Fire Extinguishers', unit: 'units', category: 'Supplies' },
-      { name: 'Rescue Ladders', unit: 'ladders', category: 'Equipment' },
-      { name: 'Search Dogs', unit: 'dogs', category: 'Personnel' },
-      { name: 'Helicopters', unit: 'vehicles', category: 'Fleet' }
+      { name: 'Fire Trucks', unit: 'vehicles', category: 'Fleet', initial: 10 },
+      { name: 'Water Tankers', unit: 'tankers', category: 'Fleet', initial: 15 },
+      { name: 'Fire Extinguishers', unit: 'units', category: 'Supplies', initial: 200 },
+      { name: 'Rescue Ladders', unit: 'ladders', category: 'Equipment', initial: 20 },
+      { name: 'Search Dogs', unit: 'dogs', category: 'Personnel', initial: 12 },
+      { name: 'Helicopters', unit: 'vehicles', category: 'Fleet', initial: 3 }
     ],
     police: [
-      { name: 'Police Cars', unit: 'vehicles', category: 'Fleet' },
-      { name: 'Barricades', unit: 'units', category: 'Equipment' },
-      { name: 'Riot Gear', unit: 'sets', category: 'Equipment' },
-      { name: 'Surveillance Drones', unit: 'drones', category: 'Tech' },
-      { name: 'Traffic Cones', unit: 'units', category: 'Equipment' },
-      { name: 'Swat Teams', unit: 'teams', category: 'Personnel' }
+      { name: 'Police Cars', unit: 'vehicles', category: 'Fleet', initial: 45 },
+      { name: 'Barricades', unit: 'units', category: 'Equipment', initial: 100 },
+      { name: 'Riot Gear', unit: 'sets', category: 'Equipment', initial: 80 },
+      { name: 'Surveillance Drones', unit: 'drones', category: 'Tech', initial: 15 },
+      { name: 'Traffic Cones', unit: 'units', category: 'Equipment', initial: 300 },
+      { name: 'Swat Teams', unit: 'teams', category: 'Personnel', initial: 10 }
+    ],
+    other: [
+      { name: 'Supply Trucks', unit: 'vehicles', category: 'Fleet', initial: 15 },
+      { name: 'Generators', unit: 'units', category: 'Power', initial: 20 },
+      { name: 'Mobile Kitchen', unit: 'units', category: 'Food', initial: 5 },
+      { name: 'Large Tents', unit: 'tents', category: 'Shelter', initial: 50 },
+      { name: 'Relief Teams', unit: 'teams', category: 'Personnel', initial: 30 },
+      { name: 'Food Rations', unit: 'boxes', category: 'Food', initial: 1000 },
+      { name: 'Water Cases', unit: 'cases', category: 'Water', initial: 2000 }
     ]
   };
 
@@ -114,7 +123,7 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
       _id: `virtual_${opt.name.replace(/\s+/g, '_')}`,
       name: opt.name,
       unit: opt.unit,
-      quantity: 0,
+      quantity: opt.initial || 0,
       departmentType: departmentType,
       lastUpdated: Date.now(),
       isVirtual: true

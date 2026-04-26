@@ -15,6 +15,7 @@ const ManageInventory = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [stockFilter, setStockFilter] = useState('all'); // all, low, available
+  const [credits, setCredits] = useState(500); // Initial credits
   
   // New Resource Form State
   const [isCustom, setIsCustom] = useState(false);
@@ -25,28 +26,37 @@ const ManageInventory = () => {
 
   const departmentOptions = {
     ambulance: [
-      { name: 'Ambulance', unit: 'vehicles', category: 'Fleet' },
-      { name: 'Medical Kits', unit: 'kits', category: 'Supplies' },
-      { name: 'Oxygen Cylinders', unit: 'cylinders', category: 'Medical' },
-      { name: 'Stretchers', unit: 'units', category: 'Equipment' },
-      { name: 'Paramedic Teams', unit: 'teams', category: 'Personnel' },
-      { name: 'Mobile ICU', unit: 'vehicles', category: 'Fleet' }
+      { name: 'Ambulance', unit: 'vehicles', category: 'Fleet', initial: 12 },
+      { name: 'Medical Kits', unit: 'kits', category: 'Supplies', initial: 350 },
+      { name: 'Oxygen Cylinders', unit: 'cylinders', category: 'Medical', initial: 150 },
+      { name: 'Stretchers', unit: 'units', category: 'Equipment', initial: 40 },
+      { name: 'Paramedic Teams', unit: 'teams', category: 'Personnel', initial: 25 },
+      { name: 'Mobile ICU', unit: 'vehicles', category: 'Fleet', initial: 5 }
     ],
     fire: [
-      { name: 'Fire Trucks', unit: 'vehicles', category: 'Fleet' },
-      { name: 'Water Tankers', unit: 'tankers', category: 'Fleet' },
-      { name: 'Fire Extinguishers', unit: 'units', category: 'Supplies' },
-      { name: 'Rescue Ladders', unit: 'ladders', category: 'Equipment' },
-      { name: 'Search Dogs', unit: 'dogs', category: 'Personnel' },
-      { name: 'Helicopters', unit: 'vehicles', category: 'Fleet' }
+      { name: 'Fire Trucks', unit: 'vehicles', category: 'Fleet', initial: 10 },
+      { name: 'Water Tankers', unit: 'tankers', category: 'Fleet', initial: 15 },
+      { name: 'Fire Extinguishers', unit: 'units', category: 'Supplies', initial: 200 },
+      { name: 'Rescue Ladders', unit: 'ladders', category: 'Equipment', initial: 20 },
+      { name: 'Search Dogs', unit: 'dogs', category: 'Personnel', initial: 12 },
+      { name: 'Helicopters', unit: 'vehicles', category: 'Fleet', initial: 3 }
     ],
     police: [
-      { name: 'Police Cars', unit: 'vehicles', category: 'Fleet' },
-      { name: 'Barricades', unit: 'units', category: 'Equipment' },
-      { name: 'Riot Gear', unit: 'sets', category: 'Equipment' },
-      { name: 'Surveillance Drones', unit: 'drones', category: 'Tech' },
-      { name: 'Traffic Cones', unit: 'units', category: 'Equipment' },
-      { name: 'Swat Teams', unit: 'teams', category: 'Personnel' }
+      { name: 'Police Cars', unit: 'vehicles', category: 'Fleet', initial: 45 },
+      { name: 'Barricades', unit: 'units', category: 'Equipment', initial: 100 },
+      { name: 'Riot Gear', unit: 'sets', category: 'Equipment', initial: 80 },
+      { name: 'Surveillance Drones', unit: 'drones', category: 'Tech', initial: 15 },
+      { name: 'Traffic Cones', unit: 'units', category: 'Equipment', initial: 300 },
+      { name: 'Swat Teams', unit: 'teams', category: 'Personnel', initial: 10 }
+    ],
+    other: [
+      { name: 'Supply Trucks', unit: 'vehicles', category: 'Fleet', initial: 15 },
+      { name: 'Generators', unit: 'units', category: 'Power', initial: 20 },
+      { name: 'Mobile Kitchen', unit: 'units', category: 'Food', initial: 5 },
+      { name: 'Large Tents', unit: 'tents', category: 'Shelter', initial: 50 },
+      { name: 'Relief Teams', unit: 'teams', category: 'Personnel', initial: 30 },
+      { name: 'Food Rations', unit: 'boxes', category: 'Food', initial: 1000 },
+      { name: 'Water Cases', unit: 'cases', category: 'Water', initial: 2000 }
     ]
   };
 
@@ -77,20 +87,10 @@ const ManageInventory = () => {
     fetchResources();
   }, [user]);
 
-  const handleAddResource = async (e) => {
-    e.preventDefault();
-    if (!quantity) return;
+    const isRoutine = parseInt(quantity) < 50 && !isCustom;
+    const cost = isRoutine ? 0 : 50;
 
-    let name, unit;
-    if (isCustom) {
-      if (!customName || !customUnit) return;
-      name = sanitizeInput(customName, 'text');
-      unit = sanitizeInput(customUnit, 'text');
-    } else {
-      const selected = currentOptions[selectedResourceIdx];
-      name = selected.name;
-      unit = selected.unit;
-    }
+    if (credits < cost) return alert('Insufficient Logistics Credits for this manual/large request');
 
     try {
       const { data } = await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/resources`, {
@@ -98,7 +98,8 @@ const ManageInventory = () => {
         unit,
         quantity: parseInt(quantity),
         departmentType: user.departmentType,
-        lastUpdated: Date.now()
+        lastUpdated: Date.now(),
+        status: isRoutine ? 'Dispatched' : 'Pending'
       });
       
       setResources(prev => {
@@ -107,11 +108,16 @@ const ManageInventory = () => {
         return [...prev, data];
       });
       
+      if (!isRoutine) setCredits(prev => prev - 50);
       setQuantity('');
       setCustomName('');
       setCustomUnit('');
+      
+      alert(isRoutine 
+        ? `INSTANT DISPATCH: ${quantity} units released from Central Warehouse!` 
+        : `REQUISITION SUBMITTED: Awaiting Admin Approval for ${quantity} units.`);
     } catch (err) {
-      alert('Failed to add resource');
+      alert('Failed to submit requisition');
     }
   };
 
@@ -153,7 +159,7 @@ const ManageInventory = () => {
     }
   };
 
-  // Merged Ledger: Database items + Missing standard items as 0
+  // Merged Ledger: Database items + Missing standard items with tiered defaults
   const allResourcesMerged = currentOptions.map(opt => {
     const existing = resources.find(r => r.name === opt.name);
     if (existing) return existing;
@@ -161,7 +167,7 @@ const ManageInventory = () => {
       _id: `virtual_${opt.name.replace(/\s+/g, '_')}`,
       name: opt.name,
       unit: opt.unit,
-      quantity: 0,
+      quantity: opt.initial || 0,
       departmentType: user.departmentType,
       lastUpdated: Date.now(),
       isVirtual: true
@@ -195,9 +201,16 @@ const ManageInventory = () => {
               <h1 className="text-4xl font-black text-gray-900 tracking-tight flex items-center gap-3">
                 <Archive className="text-blue-600" /> Resource Ledger
               </h1>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                <p className="text-gray-500 font-bold text-xs uppercase tracking-widest">{user?.departmentType?.toUpperCase()} LOGISTICS LIVE</p>
+              <div className="flex items-center gap-4 mt-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  <p className="text-gray-500 font-bold text-xs uppercase tracking-widest">{user?.departmentType?.toUpperCase()} LOGISTICS LIVE</p>
+                </div>
+                <div className="h-4 w-px bg-gray-200"></div>
+                <div className="flex items-center gap-2 bg-yellow-50 px-3 py-1 rounded-full border border-yellow-100">
+                  <Zap size={12} className="text-yellow-600 fill-yellow-600" />
+                  <span className="text-[10px] font-black text-yellow-700 uppercase tracking-widest">{credits} CREDITS AVAILABLE</span>
+                </div>
               </div>
             </div>
           </div>
@@ -337,10 +350,16 @@ const ManageInventory = () => {
                         className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold shadow-inner" 
                      />
                   </div>
-                  <button type="submit" className="w-full py-5 bg-gray-900 text-white rounded-2xl font-black hover:bg-black transition-all shadow-2xl shadow-gray-200 mt-4 active:scale-95 flex items-center justify-center gap-3">
-                     <Archive size={20} /> AUTHORIZE ENTRY
-                  </button>
-               </form>
+                   <button type="submit" className="w-full py-5 bg-gray-900 text-white rounded-2xl font-black hover:bg-black transition-all shadow-2xl shadow-gray-200 mt-4 active:scale-95 flex items-center justify-center gap-3 group">
+                      <Archive size={20} className="group-hover:scale-110 transition-transform" /> 
+                      {parseInt(quantity) < 50 && !isCustom ? 'INSTANT REQUISITION' : 'SUBMIT FOR APPROVAL'}
+                   </button>
+                   <p className="text-[9px] font-bold text-gray-400 text-center uppercase tracking-tighter">
+                      {parseInt(quantity) < 50 && !isCustom 
+                        ? '✨ Routine request will be auto-dispatched (0 CR)' 
+                        : '⚠️ Manual/Large request requires Admin Review (50 CR)'}
+                   </p>
+                </form>
             </div>
           </div>
 
