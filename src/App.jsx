@@ -17,6 +17,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Navbar from './components/Navbar';
 import BroadcastNotification from './components/BroadcastNotification';
+import DemoDisclaimer from './components/DemoDisclaimer';
 
 
 
@@ -37,6 +38,7 @@ function App() {
   return (
     <AuthProvider>
       <div className="min-h-screen bg-gray-50">
+        <DemoDisclaimer />
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
