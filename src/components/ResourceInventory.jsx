@@ -126,13 +126,14 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
         <AnimatePresence mode='popLayout'>
           {filteredResources.map((resource) => {
             const isLow = resource.quantity < 10;
+            const isOutOfStock = resource.quantity === 0;
             return (
               <motion.div 
                 layout
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 key={resource._id} 
-                className={`p-5 rounded-[2rem] flex flex-col gap-4 transition-all relative overflow-hidden group ${isLow ? 'bg-red-50/50 border border-red-100' : 'bg-gray-50/50 border border-transparent hover:border-blue-100 hover:bg-white hover:shadow-xl hover:shadow-gray-100'}`}
+                className={`p-5 rounded-[2rem] flex flex-col gap-4 transition-all relative overflow-hidden group ${isOutOfStock ? 'bg-red-600/10 border border-red-600 shadow-xl shadow-red-50' : isLow ? 'bg-red-50/50 border border-red-100' : 'bg-gray-50/50 border border-transparent hover:border-blue-100 hover:bg-white hover:shadow-xl hover:shadow-gray-100'}`}
               >
                 {isLow && (
                   <div className="absolute top-0 right-0 p-2 text-red-500 animate-pulse">
@@ -142,8 +143,11 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
                 
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className={`font-black tracking-tight ${isLow ? 'text-red-900' : 'text-gray-900'}`}>{resource.name}</p>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{resource.unit}</p>
+                    <p className={`font-black tracking-tight ${isOutOfStock ? 'text-red-600' : isLow ? 'text-red-900' : 'text-gray-900'}`}>{resource.name}</p>
+                    <div className="flex items-center gap-2">
+                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{resource.unit}</p>
+                       {isOutOfStock && <span className="text-[8px] font-black text-red-600 bg-red-100 px-1.5 py-0.5 rounded animate-pulse">OUT OF STOCK</span>}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                      <div className="flex items-center bg-white rounded-xl p-1 shadow-sm border border-gray-100">

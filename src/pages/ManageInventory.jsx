@@ -278,6 +278,7 @@ const ManageInventory = () => {
 
                     {filteredResources.map((resource) => {
                        const isLow = resource.quantity < 10;
+                       const isOutOfStock = resource.quantity === 0;
                        const category = currentOptions.find(o => o.name === resource.name)?.category || 'General';
                        
                        return (
@@ -287,7 +288,7 @@ const ManageInventory = () => {
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.9 }}
                             key={resource._id} 
-                            className={`p-6 bg-white rounded-[2.5rem] border-2 transition-all relative overflow-hidden group ${isLow ? 'border-red-50 bg-red-50/10 shadow-red-50' : 'border-gray-50 hover:border-blue-100 shadow-xl shadow-gray-100'}`}
+                            className={`p-6 bg-white rounded-[2.5rem] border-2 transition-all relative overflow-hidden group ${isOutOfStock ? 'border-red-600 bg-red-50 shadow-red-200' : isLow ? 'border-red-200 bg-red-50/10 shadow-red-50' : 'border-gray-50 hover:border-blue-100 shadow-xl shadow-gray-100'}`}
                           >
                              {isLow && (
                                <div className="absolute -top-12 -right-12 w-24 h-24 bg-red-100 rounded-full opacity-20 blur-2xl animate-pulse"></div>
@@ -310,7 +311,11 @@ const ManageInventory = () => {
                                 <div className="flex-1">
                                    <div className="flex justify-between items-end mb-2">
                                       <p className="text-2xl font-black text-gray-900 leading-none">{resource.quantity} <span className="text-xs font-bold text-gray-400 uppercase">{resource.unit}</span></p>
-                                      {isLow && <span className="text-[10px] font-black text-red-600 flex items-center gap-1"><AlertCircle size={10} /> CRITICAL</span>}
+                                      {isOutOfStock ? (
+                                         <span className="text-[10px] font-black text-red-600 flex items-center gap-1 animate-pulse tracking-tighter"><AlertCircle size={10} /> OUT OF STOCK</span>
+                                       ) : isLow ? (
+                                         <span className="text-[10px] font-black text-red-500 flex items-center gap-1"><AlertCircle size={10} /> CRITICAL</span>
+                                       ) : null}
                                    </div>
                                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
                                       <motion.div 
