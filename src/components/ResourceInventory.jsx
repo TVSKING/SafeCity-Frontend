@@ -175,14 +175,6 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
                   </div>
                 </div>
 
-                {/* Status Bar */}
-                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden shadow-inner">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${Math.min(100, (resource.quantity / 50) * 100)}%` }}
-                    className={`h-full rounded-full ${isLow ? 'bg-red-500' : 'bg-blue-600'}`}
-                  />
-                </div>
               </motion.div>
             );
           })}

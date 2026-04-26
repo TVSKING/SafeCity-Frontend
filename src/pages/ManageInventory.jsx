@@ -317,13 +317,6 @@ const ManageInventory = () => {
                                          <span className="text-[10px] font-black text-red-500 flex items-center gap-1"><AlertCircle size={10} /> CRITICAL</span>
                                        ) : null}
                                    </div>
-                                   <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
-                                      <motion.div 
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${Math.min(100, (resource.quantity / 50) * 100)}%` }}
-                                        className={`h-full rounded-full ${isLow ? 'bg-gradient-to-r from-red-500 to-red-600' : 'bg-gradient-to-r from-blue-500 to-blue-600'}`}
-                                      />
-                                   </div>
                                 </div>
                              </div>
 
