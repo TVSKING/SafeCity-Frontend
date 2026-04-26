@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Package, Plus, Minus, RefreshCw, Send, AlertTriangle, X, Edit3 } from 'lucide-react';
+import { Package, Plus, Minus, RefreshCw, Send, AlertTriangle, X, Edit3, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ResourceInventory = ({ departmentType }) => {
   const [resources, setResources] = useState([]);
@@ -68,105 +69,151 @@ const ResourceInventory = ({ departmentType }) => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-[2rem] shadow-xl border border-gray-100 h-full">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-          <Package className="text-blue-600" />
-          Resource Ledger
-        </h3>
+    <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl border border-gray-100 flex flex-col h-full relative overflow-hidden">
+      {/* Decorative gradient blur */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 opacity-50 blur-3xl"></div>
+      
+      <div className="flex items-center justify-between mb-8 relative z-10">
+        <div>
+          <h3 className="text-2xl font-black text-gray-900 flex items-center gap-2 tracking-tight">
+            <Package className="text-blue-600" />
+            Resource Hub
+          </h3>
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1">Live Asset Ledger</p>
+        </div>
         <div className="flex gap-2">
-          <Link to="/manage-inventory" className="p-2 bg-blue-50 hover:bg-blue-100 rounded-xl text-blue-600 transition-colors" title="Manage Resource Types">
+          <Link to="/manage-inventory" className="w-10 h-10 bg-white hover:bg-blue-600 hover:text-white rounded-xl text-blue-600 transition-all shadow-sm border border-gray-100 flex items-center justify-center active:scale-95" title="Manage Resource Types">
             <Edit3 size={18} />
           </Link>
-          <button onClick={fetchResources} className="p-2 hover:bg-gray-50 rounded-xl transition-colors">
-            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+          <button onClick={fetchResources} className="w-10 h-10 bg-white hover:bg-gray-50 rounded-xl transition-all border border-gray-100 flex items-center justify-center active:scale-95">
+            <RefreshCw size={18} className={`text-gray-400 transition-all ${loading ? 'animate-spin text-blue-600' : ''}`} />
           </button>
         </div>
       </div>
 
-      <div className="space-y-4">
-        {resources.map((resource) => (
-          <div key={resource._id} className="p-4 bg-gray-50 rounded-2xl flex items-center justify-between">
-            <div>
-              <p className="font-bold text-gray-800">{resource.name}</p>
-              <p className="text-xs text-gray-500 uppercase tracking-wider">{resource.quantity} {resource.unit} available</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={() => updateQuantity(resource._id, resource.quantity - 1)}
-                className="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all"
+      <div className="space-y-5 flex-1 overflow-y-auto pr-2 custom-scrollbar relative z-10">
+        <AnimatePresence mode='popLayout'>
+          {resources.map((resource) => {
+            const isLow = resource.quantity < 10;
+            return (
+              <motion.div 
+                layout
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                key={resource._id} 
+                className={`p-5 rounded-[2rem] flex flex-col gap-4 transition-all relative overflow-hidden group ${isLow ? 'bg-red-50/50 border border-red-100' : 'bg-gray-50/50 border border-transparent hover:border-blue-100 hover:bg-white hover:shadow-xl hover:shadow-gray-100'}`}
               >
-                <Minus size={16} />
-              </button>
-              <span className="font-bold text-lg min-w-[2ch] text-center">{resource.quantity}</span>
-              <button 
-                onClick={() => updateQuantity(resource._id, resource.quantity + 1)}
-                className="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-green-50 hover:text-green-600 hover:border-green-100 transition-all"
-              >
-                <Plus size={16} />
-              </button>
-              <button 
-                onClick={() => setDeployMode(resource)}
-                className="w-8 h-8 flex items-center justify-center bg-blue-50 border border-blue-100 rounded-lg text-blue-600 hover:bg-blue-600 hover:text-white transition-all ml-2"
-                title="Deploy to Hazard Zone"
-              >
-                <Send size={14} />
-              </button>
-            </div>
-          </div>
-        ))}
+                {isLow && (
+                  <div className="absolute top-0 right-0 p-2 text-red-500 animate-pulse">
+                    <ShieldAlert size={14} />
+                  </div>
+                )}
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`font-black tracking-tight ${isLow ? 'text-red-900' : 'text-gray-900'}`}>{resource.name}</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{resource.unit}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                     <div className="flex items-center bg-white rounded-xl p-1 shadow-sm border border-gray-100">
+                        <button 
+                          onClick={() => updateQuantity(resource._id, resource.quantity - 1)}
+                          className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span className={`px-3 font-black text-sm min-w-[3ch] text-center ${isLow ? 'text-red-600' : 'text-gray-900'}`}>{resource.quantity}</span>
+                        <button 
+                          onClick={() => updateQuantity(resource._id, resource.quantity + 1)}
+                          className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
+                        >
+                          <Plus size={14} />
+                        </button>
+                     </div>
+                     <button 
+                        onClick={() => setDeployMode(resource)}
+                        className={`w-10 h-10 flex items-center justify-center rounded-xl shadow-lg transition-all active:scale-95 ${isLow ? 'bg-red-600 text-white shadow-red-200' : 'bg-blue-600 text-white shadow-blue-200'}`}
+                        title="Deploy to Hazard Zone"
+                      >
+                        <Send size={14} />
+                      </button>
+                  </div>
+                </div>
+
+                {/* Status Bar */}
+                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min(100, (resource.quantity / 50) * 100)}%` }}
+                    className={`h-full rounded-full ${isLow ? 'bg-red-500' : 'bg-blue-600'}`}
+                  />
+                </div>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+        
         {resources.length === 0 && !loading && (
-          <p className="text-gray-400 text-center py-4 italic">No resources found.</p>
+          <div className="py-12 text-center">
+            <Package size={40} className="mx-auto text-gray-100 mb-2" />
+            <p className="text-gray-400 font-bold text-sm">No resources logged.</p>
+          </div>
         )}
       </div>
 
       {/* Deployment Panel */}
-      {deployMode && (
-        <div className="mt-6 p-5 bg-blue-50 rounded-2xl border border-blue-200 shadow-inner animate-in fade-in zoom-in">
-           <div className="flex justify-between items-center mb-4">
-              <h4 className="font-black text-blue-900 flex items-center gap-2"><Send size={16} /> Deploy {deployMode.name}</h4>
-              <button onClick={() => setDeployMode(null)} className="text-blue-400 hover:text-blue-600"><X size={16} /></button>
-           </div>
-           
-           {activeHazards.length === 0 ? (
-             <div className="text-sm font-bold text-blue-600 flex items-center gap-2">
-                <AlertTriangle size={16} /> No active hazard zones to deploy to.
+      <AnimatePresence>
+        {deployMode && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="absolute bottom-4 left-4 right-4 z-50 p-6 bg-gray-900 text-white rounded-[2rem] shadow-2xl animate-in fade-in zoom-in"
+          >
+             <div className="flex justify-between items-center mb-5">
+                <h4 className="font-black flex items-center gap-2"><Send size={18} className="text-blue-400" /> DEPLOY ASSET</h4>
+                <button onClick={() => setDeployMode(null)} className="p-2 hover:bg-gray-800 rounded-xl transition-all"><X size={18} /></button>
              </div>
-           ) : (
-             <div className="space-y-4">
-                <div>
-                  <label className="text-[10px] font-black uppercase text-blue-500 mb-1 block">Target Hazard Zone</label>
-                  <select 
-                    className="w-full p-2 rounded-xl border-none outline-none font-bold text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
-                    value={selectedHazard}
-                    onChange={(e) => setSelectedHazard(e.target.value)}
+             
+             {activeHazards.length === 0 ? (
+               <div className="p-4 bg-red-900/30 border border-red-900/50 rounded-2xl text-xs font-bold text-red-400 flex items-center gap-2">
+                  <AlertTriangle size={16} /> NO ACTIVE HAZARD ZONES
+               </div>
+             ) : (
+               <div className="space-y-5">
+                  <div className="p-4 bg-gray-800 rounded-2xl">
+                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">TARGET ZONE</p>
+                     <select 
+                       className="w-full bg-transparent border-none outline-none font-bold text-sm text-white cursor-pointer"
+                       value={selectedHazard}
+                       onChange={(e) => setSelectedHazard(e.target.value)}
+                     >
+                        {activeHazards.map(h => (
+                          <option key={h._id} value={h._id} className="bg-gray-900">{h.type} Hazard ({h.radius}m)</option>
+                        ))}
+                     </select>
+                  </div>
+                  
+                  <div className="p-4 bg-gray-800 rounded-2xl">
+                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">UNITS TO DEPLOY</p>
+                     <div className="flex items-center justify-between">
+                        <button onClick={() => setDeployQty(Math.max(1, deployQty - 1))} className="p-1 hover:text-blue-400 transition-colors"><Minus size={18} /></button>
+                        <span className="text-xl font-black">{deployQty}</span>
+                        <button onClick={() => setDeployQty(Math.min(deployMode.quantity, deployQty + 1))} className="p-1 hover:text-blue-400 transition-colors"><Plus size={18} /></button>
+                     </div>
+                  </div>
+                  
+                  <button 
+                    onClick={handleDeploy}
+                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black shadow-xl shadow-blue-900/40 transition-all active:scale-95 flex justify-center items-center gap-3"
                   >
-                     {activeHazards.map(h => (
-                       <option key={h._id} value={h._id}>{h.type} Hazard (Radius: {h.radius}m)</option>
-                     ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[10px] font-black uppercase text-blue-500 mb-1 block">Quantity ({deployMode.unit})</label>
-                  <input 
-                    type="number" 
-                    min="1" 
-                    max={deployMode.quantity} 
-                    value={deployQty} 
-                    onChange={e => setDeployQty(parseInt(e.target.value))}
-                    className="w-full p-2 rounded-xl border-none outline-none font-bold text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <button 
-                  onClick={handleDeploy}
-                  className="w-full py-3 bg-blue-600 text-white rounded-xl font-black shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all flex justify-center items-center gap-2"
-                >
-                  <Send size={16} /> CONFIRM DEPLOYMENT
-                </button>
-             </div>
-           )}
-        </div>
-      )}
+                    <Send size={18} /> AUTHORIZE DEPLOYMENT
+                  </button>
+               </div>
+             )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
