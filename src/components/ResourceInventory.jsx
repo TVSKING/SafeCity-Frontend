@@ -14,6 +14,43 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
 
+  const departmentOptions = {
+    ambulance: [
+      { name: 'Ambulance', unit: 'vehicles', category: 'Fleet' },
+      { name: 'Medical Kits', unit: 'kits', category: 'Supplies' },
+      { name: 'Oxygen Cylinders', unit: 'cylinders', category: 'Medical' },
+      { name: 'Stretchers', unit: 'units', category: 'Equipment' },
+      { name: 'Paramedic Teams', unit: 'teams', category: 'Personnel' },
+      { name: 'Mobile ICU', unit: 'vehicles', category: 'Fleet' }
+    ],
+    fire: [
+      { name: 'Fire Trucks', unit: 'vehicles', category: 'Fleet' },
+      { name: 'Water Tankers', unit: 'tankers', category: 'Fleet' },
+      { name: 'Fire Extinguishers', unit: 'units', category: 'Supplies' },
+      { name: 'Rescue Ladders', unit: 'ladders', category: 'Equipment' },
+      { name: 'Search Dogs', unit: 'dogs', category: 'Personnel' },
+      { name: 'Helicopters', unit: 'vehicles', category: 'Fleet' }
+    ],
+    police: [
+      { name: 'Police Cars', unit: 'vehicles', category: 'Fleet' },
+      { name: 'Barricades', unit: 'units', category: 'Equipment' },
+      { name: 'Riot Gear', unit: 'sets', category: 'Equipment' },
+      { name: 'Surveillance Drones', unit: 'drones', category: 'Tech' },
+      { name: 'Traffic Cones', unit: 'units', category: 'Equipment' },
+      { name: 'Swat Teams', unit: 'teams', category: 'Personnel' }
+    ]
+  };
+
+  const defaultOptions = [
+    { name: 'Supply Truck', unit: 'vehicles', category: 'Fleet' },
+    { name: 'Water Bottles', unit: 'cases', category: 'Food/Water' },
+    { name: 'Food Rations', unit: 'boxes', category: 'Food/Water' },
+    { name: 'Blankets', unit: 'units', category: 'Shelter' },
+    { name: 'Tents', unit: 'units', category: 'Shelter' }
+  ];
+
+  const currentOptions = departmentOptions[departmentType] || defaultOptions;
+
   const fetchResources = async () => {
     setLoading(true);
     try {
@@ -56,21 +93,50 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
     } catch (err) { alert('Failed to deploy resources'); }
   };
 
-  const updateQuantity = async (id, newQty) => {
+  const updateQuantity = async (resource, newQty) => {
     if (newQty < 0) return;
+    const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    const token = localStorage.getItem('token');
+
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-      const token = localStorage.getItem('token');
-      await axios.put(`${baseUrl}/api/resources/update/${id}`, { quantity: newQty }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setResources(resources.map(r => r._id === id ? { ...r, quantity: newQty } : r));
+      if (resource.isVirtual) {
+        // Create new item in DB if it was virtual
+        const { data } = await axios.post(`${baseUrl}/api/resources`, {
+          name: resource.name,
+          unit: resource.unit,
+          quantity: newQty,
+          departmentType: departmentType,
+          lastUpdated: Date.now()
+        }, { headers: { Authorization: `Bearer ${token}` } });
+        setResources(prev => [...prev, data]);
+      } else {
+        // Normal update
+        await axios.put(`${baseUrl}/api/resources/update/${resource._id}`, { quantity: newQty }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setResources(resources.map(r => r._id === resource._id ? { ...r, quantity: newQty } : r));
+      }
     } catch (err) {
       console.error('Update failed');
     }
   };
 
-  const filteredResources = resources
+  // Merged Ledger
+  const allResourcesMerged = currentOptions.map(opt => {
+    const existing = resources.find(r => r.name === opt.name);
+    if (existing) return existing;
+    return {
+      _id: `virtual_${opt.name.replace(/\s+/g, '_')}`,
+      name: opt.name,
+      unit: opt.unit,
+      quantity: 0,
+      departmentType: departmentType,
+      lastUpdated: Date.now(),
+      isVirtual: true
+    };
+  });
+
+  const filteredResources = allResourcesMerged
     .filter(r => r.name.toLowerCase().includes(searchTerm.toLowerCase().trim()))
     .filter(r => {
        const q = Number(r.quantity);
@@ -153,14 +219,14 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
                   <div className="flex items-center gap-2">
                      <div className="flex items-center bg-white rounded-xl p-1 shadow-sm border border-gray-100">
                         <button 
-                          onClick={() => updateQuantity(resource._id, resource.quantity - 1)}
+                          onClick={() => updateQuantity(resource, resource.quantity - 1)}
                           className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                         >
                           <Minus size={14} />
                         </button>
                         <span className={`px-3 font-black text-sm min-w-[3ch] text-center ${isLow ? 'text-red-600' : 'text-gray-900'}`}>{resource.quantity}</span>
                         <button 
-                          onClick={() => updateQuantity(resource._id, resource.quantity + 1)}
+                          onClick={() => updateQuantity(resource, resource.quantity + 1)}
                           className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
                         >
                           <Plus size={14} />

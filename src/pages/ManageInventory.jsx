@@ -113,23 +113,52 @@ const ManageInventory = () => {
     }
   };
 
-  const handleUpdateQuantity = async (id, currentQty, delta) => {
+  const handleUpdateQuantity = async (resource, delta) => {
+    const currentQty = Number(resource.quantity);
     const newQty = Math.max(0, currentQty + delta);
+    const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-      await axios.put(`${baseUrl}/api/resources/update/${id}`, { quantity: newQty });
-      setResources(prev => prev.map(r => r._id === id ? { ...r, quantity: newQty, lastUpdated: Date.now() } : r));
+      if (resource.isVirtual) {
+        // Create new item in DB if it was virtual
+        const { data } = await axios.post(`${baseUrl}/api/resources`, {
+          name: resource.name,
+          unit: resource.unit,
+          quantity: newQty,
+          departmentType: user.departmentType,
+          lastUpdated: Date.now()
+        });
+        setResources(prev => [...prev, data]);
+      } else {
+        // Normal update
+        await axios.put(`${baseUrl}/api/resources/update/${resource._id}`, { quantity: newQty });
+        setResources(prev => prev.map(r => r._id === resource._id ? { ...r, quantity: newQty, lastUpdated: Date.now() } : r));
+      }
     } catch (err) {
       alert('Failed to update quantity');
     }
   };
 
-  // Stats calculation
-  const totalStock = resources.reduce((acc, r) => acc + Number(r.quantity), 0);
-  const lowStockCount = resources.filter(r => Number(r.quantity) < 10).length;
-  const recentUpdates = resources.filter(r => (Date.now() - new Date(r.lastUpdated).getTime()) < 86400000).length;
+  // Merged Ledger: Database items + Missing standard items as 0
+  const allResourcesMerged = currentOptions.map(opt => {
+    const existing = resources.find(r => r.name === opt.name);
+    if (existing) return existing;
+    return {
+      _id: `virtual_${opt.name.replace(/\s+/g, '_')}`,
+      name: opt.name,
+      unit: opt.unit,
+      quantity: 0,
+      departmentType: user.departmentType,
+      lastUpdated: Date.now(),
+      isVirtual: true
+    };
+  });
 
-  const filteredResources = resources
+  const totalStock = allResourcesMerged.reduce((acc, r) => acc + Number(r.quantity), 0);
+  const lowStockCount = allResourcesMerged.filter(r => Number(r.quantity) < 10).length;
+  const recentUpdates = allResourcesMerged.filter(r => !r.isVirtual && (Date.now() - new Date(r.lastUpdated).getTime()) < 86400000).length;
+
+  const filteredResources = allResourcesMerged
     .filter(r => r.name.toLowerCase().includes(searchTerm.toLowerCase().trim()))
     .filter(r => {
       const q = Number(r.quantity);
@@ -313,8 +342,8 @@ const ManageInventory = () => {
                                    <p className="text-xl font-black text-gray-900">{resource.name}</p>
                                 </div>
                                 <button 
-                                  onClick={() => handleDeleteResource(resource._id)}
-                                  className="p-3 bg-gray-50 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                                  onClick={() => !resource.isVirtual && handleDeleteResource(resource._id)}
+                                  className={`p-3 bg-gray-50 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100 ${resource.isVirtual ? 'cursor-not-allowed opacity-0' : ''}`}
                                 >
                                    <Trash2 size={18} />
                                 </button>
@@ -333,17 +362,17 @@ const ManageInventory = () => {
                                 </div>
                              </div>
 
-                             <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-50">
+                              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-50">
                                 <div className="flex items-center bg-gray-50 rounded-2xl p-1 shadow-inner">
                                    <button 
-                                      onClick={() => handleUpdateQuantity(resource._id, resource.quantity, -1)}
+                                      onClick={() => handleUpdateQuantity(resource, -1)}
                                       className="p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-xl transition-all shadow-sm"
                                    >
                                       <Minus size={18} />
                                    </button>
                                    <span className="px-4 font-black text-gray-900 text-sm">{resource.quantity}</span>
                                    <button 
-                                      onClick={() => handleUpdateQuantity(resource._id, resource.quantity, 1)}
+                                      onClick={() => handleUpdateQuantity(resource, 1)}
                                       className="p-2 text-gray-400 hover:text-green-600 hover:bg-white rounded-xl transition-all shadow-sm"
                                    >
                                       <Plus size={18} />
@@ -351,7 +380,9 @@ const ManageInventory = () => {
                                 </div>
                                 <div className="text-right">
                                    <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none">Last Audit</p>
-                                   <p className="text-[10px] font-bold text-gray-900 mt-1">{new Date(resource.lastUpdated).toLocaleDateString()}</p>
+                                   <p className="text-[10px] font-bold text-gray-900 mt-1">
+                                      {resource.isVirtual ? 'NEVER' : new Date(resource.lastUpdated).toLocaleDateString()}
+                                   </p>
                                 </div>
                              </div>
                           </motion.div>
