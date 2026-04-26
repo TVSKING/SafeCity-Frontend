@@ -18,6 +18,7 @@ import ResetPassword from './pages/ResetPassword';
 import Navbar from './components/Navbar';
 import BroadcastNotification from './components/BroadcastNotification';
 import DemoDisclaimer from './components/DemoDisclaimer';
+import { DeviceProvider } from './context/DeviceContext';
 
 
 
@@ -37,61 +38,63 @@ const ProtectedRoute = ({ children, role }) => {
 function App() {
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-gray-50">
-        <DemoDisclaimer />
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/activate" element={<Activate />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          
-          <Route path="/admin" element={
-            <ProtectedRoute role="admin">
-              <AdminDashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/accounts" element={
-            <ProtectedRoute role="admin">
-              <ManageAccounts />
-            </ProtectedRoute>
-          } />
+      <DeviceProvider>
+        <div className="min-h-screen bg-gray-50">
+          <DemoDisclaimer />
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/activate" element={<Activate />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            
+            <Route path="/admin" element={
+              <ProtectedRoute role="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/accounts" element={
+              <ProtectedRoute role="admin">
+                <ManageAccounts />
+              </ProtectedRoute>
+            } />
 
-          <Route path="/bento" element={
-            <ProtectedRoute role="admin">
-              <BentoDashboard />
-            </ProtectedRoute>
-          } />
+            <Route path="/bento" element={
+              <ProtectedRoute role="admin">
+                <BentoDashboard />
+              </ProtectedRoute>
+            } />
 
-          <Route path="/dashboard" element={
-            <ProtectedRoute role="department">
-              <DepartmentDashboard />
-            </ProtectedRoute>
-          } />
+            <Route path="/dashboard" element={
+              <ProtectedRoute role="department">
+                <DepartmentDashboard />
+              </ProtectedRoute>
+            } />
 
-          <Route path="/manage-inventory" element={
-            <ProtectedRoute role="department">
-              <ManageInventory />
-            </ProtectedRoute>
-          } />
+            <Route path="/manage-inventory" element={
+              <ProtectedRoute role="department">
+                <ManageInventory />
+              </ProtectedRoute>
+            } />
 
-          <Route path="/dispatch" element={
-            <ProtectedRoute>
-              <LiveDispatchMap />
-            </ProtectedRoute>
-          } />
+            <Route path="/dispatch" element={
+              <ProtectedRoute>
+                <LiveDispatchMap />
+              </ProtectedRoute>
+            } />
 
-          <Route path="/collaboration" element={<CollaborationHub />} />
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          } />
-        </Routes>
-        <BroadcastNotification />
-      </div>
+            <Route path="/collaboration" element={<CollaborationHub />} />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
+          </Routes>
+          <BroadcastNotification />
+        </div>
+      </DeviceProvider>
     </AuthProvider>
   );
 }
