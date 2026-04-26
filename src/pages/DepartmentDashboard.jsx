@@ -4,7 +4,7 @@ import io from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import ResourceInventory from '../components/ResourceInventory';
-import { ShieldCheck, Activity, MapPin, CheckCircle, Clock, AlertCircle, PlayCircle, Phone, LayoutDashboard, Map as MapIcon, Zap, Send } from 'lucide-react';
+import { ShieldCheck, Activity, MapPin, CheckCircle, Clock, AlertCircle, PlayCircle, Phone, LayoutDashboard, Map as MapIcon, Zap, Send, Archive } from 'lucide-react';
 
 
 const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000");
@@ -96,10 +96,10 @@ const DepartmentDashboard = () => {
             <LayoutDashboard size={18} /> Alerts
           </button>
           <button 
-            onClick={() => setActiveTab('heatmap')}
-            className={`px-6 py-2 rounded-xl font-bold transition-all flex items-center gap-2 ${activeTab === 'heatmap' ? 'bg-red-600 text-white shadow-md shadow-red-200' : 'text-gray-500 hover:bg-gray-50'}`}
+            onClick={() => setActiveTab('inventory')}
+            className={`px-6 py-2 rounded-xl font-bold transition-all flex items-center gap-2 ${activeTab === 'inventory' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-gray-500 hover:bg-gray-50'}`}
           >
-            <MapIcon size={18} /> Heatmap
+            <Archive size={18} /> Inventory
           </button>
         </div>
         
@@ -112,7 +112,7 @@ const DepartmentDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Left Column: Stats and Resources */}
+        {/* Left Column: Stats */}
         <div className="lg:col-span-1 space-y-8">
           <div className="grid grid-cols-1 gap-4">
             <div className="p-6 rounded-3xl bg-red-50 border border-red-100 shadow-sm relative overflow-hidden">
@@ -131,11 +131,9 @@ const DepartmentDashboard = () => {
                <span className="text-4xl font-black text-green-600">{stats.resolved}</span>
             </div>
           </div>
-
-          <ResourceInventory departmentType={user.departmentType} />
         </div>
 
-        {/* Right Column: Alerts List or Heatmap */}
+        {/* Right Column: Alerts List or Full Inventory */}
         <div className="lg:col-span-3">
           {activeTab === 'alerts' ? (
             <div className="space-y-6">
@@ -201,17 +199,8 @@ const DepartmentDashboard = () => {
               ))}
             </div>
           ) : (
-            <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-gray-100 h-[600px] flex flex-col items-center justify-center relative overflow-hidden">
-               <div className="text-center z-10">
-                  <MapIcon size={64} className="mx-auto text-gray-200 mb-4" />
-                  <h3 className="text-2xl font-black text-gray-800">Incident Density Map</h3>
-                  <p className="text-gray-500 max-w-sm mx-auto mt-2">Real-time heatmap showing high-impact clusters for resource prioritization.</p>
-               </div>
-               {/* Animated Heatmap circles background */}
-               <div className="absolute inset-0 opacity-20 pointer-events-none">
-                  <div className="absolute top-1/4 left-1/3 w-64 h-64 bg-red-500 rounded-full blur-[100px] animate-pulse"></div>
-                  <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-orange-500 rounded-full blur-[120px] animate-pulse [animation-delay:1s]"></div>
-               </div>
+            <div className="animate-in fade-in zoom-in">
+               <ResourceInventory departmentType={user.departmentType} isFull={true} />
             </div>
           )}
         </div>

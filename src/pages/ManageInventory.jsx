@@ -101,6 +101,30 @@ const ManageInventory = () => {
     }
   };
 
+  const handleSeedData = async () => {
+    setLoading(true);
+    try {
+      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      // We'll add a few items from currentOptions with random quantities
+      for (const item of currentOptions.slice(0, 4)) {
+        await axios.post(`${baseUrl}/api/resources`, {
+          name: item.name,
+          unit: item.unit,
+          quantity: Math.floor(Math.random() * 30) + 5,
+          departmentType: user.departmentType,
+          lastUpdated: Date.now()
+        });
+      }
+      fetchResources();
+      alert('Demo ledger populated successfully!');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to seed data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDeleteResource = async (id) => {
     if (!window.confirm('Are you sure you want to permanently delete this resource type?')) return;
     try {
@@ -271,7 +295,13 @@ const ManageInventory = () => {
                     {filteredResources.length === 0 && !loading && (
                        <div className="col-span-full py-20 text-center">
                           <Archive size={60} className="mx-auto text-gray-100 mb-4" />
-                          <p className="text-gray-400 font-bold">No matching resources found in your ledger.</p>
+                          <p className="text-gray-400 font-bold mb-6">No matching resources found in your ledger.</p>
+                          <button 
+                            onClick={handleSeedData}
+                            className="px-8 py-4 bg-blue-50 text-blue-600 rounded-2xl font-black hover:bg-blue-600 hover:text-white transition-all shadow-sm flex items-center gap-2 mx-auto"
+                          >
+                             <Plus size={18} /> POPULATE DEMO LEDGER
+                          </button>
                        </div>
                     )}
 

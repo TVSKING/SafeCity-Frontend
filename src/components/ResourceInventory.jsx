@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Package, Plus, Minus, RefreshCw, Send, AlertTriangle, X, Edit3, ShieldAlert } from 'lucide-react';
+import { Package, Plus, Minus, RefreshCw, Send, AlertTriangle, X, Edit3, ShieldAlert, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const ResourceInventory = ({ departmentType }) => {
+const ResourceInventory = ({ departmentType, isFull = false }) => {
   const [resources, setResources] = useState([]);
   const [activeHazards, setActiveHazards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deployMode, setDeployMode] = useState(null); // stores resource object
   const [deployQty, setDeployQty] = useState(1);
   const [selectedHazard, setSelectedHazard] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState('all');
 
   const fetchResources = async () => {
     setLoading(true);
@@ -68,20 +70,49 @@ const ResourceInventory = ({ departmentType }) => {
     }
   };
 
+  const filteredResources = resources
+    .filter(r => r.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(r => {
+       if (filter === 'low') return r.quantity < 10;
+       return true;
+    });
+
   return (
-    <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl border border-gray-100 flex flex-col h-full relative overflow-hidden">
+    <div className={`bg-white p-8 rounded-[2.5rem] shadow-2xl border border-gray-100 flex flex-col h-full relative overflow-hidden ${isFull ? 'min-h-[700px]' : ''}`}>
       {/* Decorative gradient blur */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 opacity-50 blur-3xl"></div>
       
-      <div className="flex items-center justify-between mb-8 relative z-10">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 relative z-10 gap-4">
         <div>
           <h3 className="text-2xl font-black text-gray-900 flex items-center gap-2 tracking-tight">
             <Package className="text-blue-600" />
-            Resource Hub
+            {isFull ? 'Operational Resource Ledger' : 'Resource Hub'}
           </h3>
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1">Live Asset Ledger</p>
         </div>
+
+        {isFull && (
+           <div className="flex flex-1 max-w-md bg-gray-50 px-4 py-2 rounded-2xl border border-gray-100 items-center gap-2 mx-4">
+              <Search size={18} className="text-gray-400" />
+              <input 
+                type="text" 
+                placeholder="Search resources..." 
+                className="bg-transparent border-none outline-none font-bold text-sm flex-1"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+           </div>
+        )}
+
         <div className="flex gap-2">
+          {isFull && (
+             <button 
+                onClick={() => setFilter(filter === 'low' ? 'all' : 'low')}
+                className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all flex items-center gap-2 ${filter === 'low' ? 'bg-red-600 text-white shadow-lg shadow-red-100' : 'bg-gray-100 text-gray-400'}`}
+             >
+                <AlertTriangle size={14} /> LOW STOCK
+             </button>
+          )}
           <Link to="/manage-inventory" className="w-10 h-10 bg-white hover:bg-blue-600 hover:text-white rounded-xl text-blue-600 transition-all shadow-sm border border-gray-100 flex items-center justify-center active:scale-95" title="Manage Resource Types">
             <Edit3 size={18} />
           </Link>
@@ -91,9 +122,9 @@ const ResourceInventory = ({ departmentType }) => {
         </div>
       </div>
 
-      <div className="space-y-5 flex-1 overflow-y-auto pr-2 custom-scrollbar relative z-10">
+      <div className={`grid gap-5 flex-1 overflow-y-auto pr-2 custom-scrollbar relative z-10 ${isFull ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
         <AnimatePresence mode='popLayout'>
-          {resources.map((resource) => {
+          {filteredResources.map((resource) => {
             const isLow = resource.quantity < 10;
             return (
               <motion.div 
