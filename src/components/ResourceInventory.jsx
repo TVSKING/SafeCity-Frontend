@@ -180,10 +180,14 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
           })}
         </AnimatePresence>
         
-        {resources.length === 0 && !loading && (
-          <div className="py-12 text-center">
+        {filteredResources.length === 0 && !loading && (
+          <div className="py-12 text-center col-span-full">
             <Package size={40} className="mx-auto text-gray-100 mb-2" />
-            <p className="text-gray-400 font-bold text-sm">No resources logged.</p>
+            <p className="text-gray-400 font-bold text-sm">
+               {filter === 'low' 
+                 ? "No critical stock alerts at this time." 
+                 : "No resources logged in this department."}
+            </p>
           </div>
         )}
       </div>

@@ -240,7 +240,7 @@ const ManageInventory = () => {
                      <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Initial Quantity</label>
                      <input 
                         type="number" 
-                        min="1"
+                        min="0"
                         required 
                         value={quantity} 
                         onChange={e => setQuantity(sanitizeInput(e.target.value, 'number'))} 
@@ -272,7 +272,11 @@ const ManageInventory = () => {
                     {filteredResources.length === 0 && !loading && (
                        <div className="col-span-full py-20 text-center">
                           <Archive size={60} className="mx-auto text-gray-100 mb-4" />
-                          <p className="text-gray-400 font-bold">No matching resources found in your ledger.</p>
+                          <p className="text-gray-400 font-bold">
+                             {stockFilter === 'low' 
+                               ? "Great job! All resources are currently well-stocked." 
+                               : "No matching resources found in your ledger."}
+                          </p>
                        </div>
                     )}
 
