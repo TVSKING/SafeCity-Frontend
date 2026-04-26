@@ -77,6 +77,20 @@ const ManageInventory = () => {
   useEffect(() => {
     fetchResources();
   }, [user]);
+  const handleAddResource = async (e) => {
+    e.preventDefault();
+    if (!quantity) return;
+
+    let name, unit;
+    if (isCustom) {
+      if (!customName || !customUnit) return;
+      name = sanitizeInput(customName, 'text');
+      unit = sanitizeInput(customUnit, 'text');
+    } else {
+      const selected = currentOptions[selectedResourceIdx];
+      name = selected.name;
+      unit = selected.unit;
+    }
 
     const isRoutine = parseInt(quantity) < 50 && !isCustom;
     const cost = isRoutine ? 0 : 50;
