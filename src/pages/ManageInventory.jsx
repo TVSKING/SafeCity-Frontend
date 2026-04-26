@@ -125,15 +125,16 @@ const ManageInventory = () => {
   };
 
   // Stats calculation
-  const totalStock = resources.reduce((acc, r) => acc + r.quantity, 0);
-  const lowStockCount = resources.filter(r => r.quantity < 10).length;
+  const totalStock = resources.reduce((acc, r) => acc + Number(r.quantity), 0);
+  const lowStockCount = resources.filter(r => Number(r.quantity) < 10).length;
   const recentUpdates = resources.filter(r => (Date.now() - new Date(r.lastUpdated).getTime()) < 86400000).length;
 
   const filteredResources = resources
-    .filter(r => r.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(r => r.name.toLowerCase().includes(searchTerm.toLowerCase().trim()))
     .filter(r => {
-      if (stockFilter === 'low') return r.quantity < 10;
-      if (stockFilter === 'available') return r.quantity >= 10;
+      const q = Number(r.quantity);
+      if (stockFilter === 'low') return q < 10;
+      if (stockFilter === 'available') return q >= 10;
       return true;
     });
 
@@ -277,6 +278,14 @@ const ManageInventory = () => {
                                ? "Great job! All resources are currently well-stocked." 
                                : "No matching resources found in your ledger."}
                           </p>
+                          {(searchTerm || stockFilter !== 'all') && (
+                            <button 
+                              onClick={() => { setSearchTerm(''); setStockFilter('all'); }}
+                              className="mt-4 text-blue-600 font-black text-xs uppercase tracking-widest hover:underline"
+                            >
+                              Reset All Filters
+                            </button>
+                          )}
                        </div>
                     )}
 

@@ -71,9 +71,10 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
   };
 
   const filteredResources = resources
-    .filter(r => r.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(r => r.name.toLowerCase().includes(searchTerm.toLowerCase().trim()))
     .filter(r => {
-       if (filter === 'low') return r.quantity < 10;
+       const q = Number(r.quantity);
+       if (filter === 'low') return q < 10;
        return true;
     });
 
