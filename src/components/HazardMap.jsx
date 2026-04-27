@@ -48,38 +48,36 @@ const HazardMap = ({ stateFilter = null, showIncidents = false }) => {
     radius: 500
   });
 
-  useEffect(() => {
-    const fetchHazards = async () => {
-      try {
-        const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin-tools/hazards`);
-        setHazards(data);
-      } catch (err) { console.error(err); }
-    };
+  const fetchHazards = async () => {
+    try {
+      const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin-tools/hazards`);
+      setHazards(data);
+    } catch (err) { console.error(err); }
+  };
 
-    const fetchAlerts = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const url = stateFilter 
-          ? `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/department?deptType=all`
-          : `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/admin`;
-          
-        const { data } = await axios.get(url, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
-        });
+  const fetchAlerts = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const url = stateFilter 
+        ? `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/department?deptType=all`
+        : `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/admin`;
         
-        // Handle both admin (array) and department (object) responses
-        const received = data.alerts || (Array.isArray(data) ? data : []);
-        setAlerts(received.filter(a => a.status !== 'Resolved'));
-      } catch (err) { console.error(err); }
-    };
+      const { data } = await axios.get(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      
+      const received = data.alerts || (Array.isArray(data) ? data : []);
+      setAlerts(received.filter(a => a.status !== 'Resolved'));
+    } catch (err) { console.error(err); }
+  };
 
+  useEffect(() => {
     fetchHazards();
     if (showIncidents) fetchAlerts();
 
     // Socket.io Real-time Updates
     if (showIncidents) {
       socket.on('newAlert', (newAlert) => {
-        // If stateFilter exists, only add if it matches (fuzzy)
         if (stateFilter) {
           const alertState = (newAlert.state || '').trim().toLowerCase();
           const targetState = (stateFilter || '').trim().toLowerCase();
@@ -97,10 +95,8 @@ const HazardMap = ({ stateFilter = null, showIncidents = false }) => {
       });
     }
 
-    // If state filter is provided, try to focus map on that state
     if (stateFilter) {
       setSearchQuery(stateFilter);
-      // Auto-trigger search for state
       const triggerStateSearch = async () => {
         try {
           const { data } = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${stateFilter}&countrycodes=in`);
@@ -113,7 +109,6 @@ const HazardMap = ({ stateFilter = null, showIncidents = false }) => {
       triggerStateSearch();
     }
 
-    // Auto-detect location
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition((pos) => {
         setMapCenter([pos.coords.latitude, pos.coords.longitude]);
@@ -121,10 +116,16 @@ const HazardMap = ({ stateFilter = null, showIncidents = false }) => {
       });
     }
 
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
     }, 200);
-  }, []);
+
+    return () => {
+      socket.off('newAlert');
+      socket.off('alertUpdated');
+      clearTimeout(timer);
+    };
+  }, [stateFilter, showIncidents]);
 
   const handleSearch = async (e) => {
     if (e) e.preventDefault();
@@ -208,6 +209,14 @@ const HazardMap = ({ stateFilter = null, showIncidents = false }) => {
           >
             {isSearching ? '...' : <><Search size={14} /> FIND</>}
           </button>
+          <button 
+            type="button"
+            onClick={() => { fetchAlerts(); fetchHazards(); }}
+            className="bg-red-50 text-red-600 p-2 rounded-xl hover:bg-red-100 transition-all border border-red-100"
+            title="Force Sync Map"
+          >
+            <Navigation size={20} className="rotate-45" />
+          </button>
         </form>
       </div>
 
@@ -250,7 +259,7 @@ const HazardMap = ({ stateFilter = null, showIncidents = false }) => {
             position={[alert.location.lat, alert.location.lng]}
             icon={L.divIcon({
               className: 'custom-div-icon',
-              html: `<div style="font-size: 30px; background: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid white;">${getEmoji(alert.type)}</div>`,
+              html: `<div style="font-size: 24px; background: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); border: 2px solid white; cursor: pointer;">${getEmoji(alert.type)}</div>`,
               iconSize: [40, 40],
               iconAnchor: [20, 20]
             })}
