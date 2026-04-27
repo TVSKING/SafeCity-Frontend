@@ -41,7 +41,7 @@ const PublicHazardMap = () => {
 
   return (
     <div className="h-[500px] w-full rounded-[3rem] overflow-hidden shadow-2xl relative border-4 border-white">
-      <MapContainer center={[22.3039, 70.8022]} zoom={13} style={{ height: '100%', width: '100%' }}>
+      <MapContainer center={[20.5937, 78.9629]} zoom={5} style={{ height: '100%', width: '100%' }}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         
         {hazards.map((h, i) => (

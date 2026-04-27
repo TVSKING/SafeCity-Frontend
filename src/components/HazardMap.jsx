@@ -95,27 +95,6 @@ const HazardMap = ({ stateFilter = null, showIncidents = false, onUpdateStatus =
       });
     }
 
-    if (stateFilter) {
-      setSearchQuery(stateFilter);
-      const triggerStateSearch = async () => {
-        try {
-          const { data } = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${stateFilter}&countrycodes=in`);
-          if (data.length > 0) {
-            setMapCenter([parseFloat(data[0].lat), parseFloat(data[0].lon)]);
-            setZoom(7);
-          }
-        } catch (err) {}
-      };
-      triggerStateSearch();
-    }
-
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition((pos) => {
-        setMapCenter([pos.coords.latitude, pos.coords.longitude]);
-        setZoom(13);
-      });
-    }
-
     const timer = setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
     }, 200);

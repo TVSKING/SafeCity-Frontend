@@ -15,7 +15,7 @@ let DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 const MapSelector = ({ location, onLocationSelect }) => {
-  const [position, setPosition] = useState([location?.lat || 22.3039, location?.lng || 70.8022]);
+  const [position, setPosition] = useState([location?.lat || 20.5937, location?.lng || 78.9629]);
 
   useEffect(() => {
     if (location) {
@@ -28,7 +28,7 @@ const MapSelector = ({ location, onLocationSelect }) => {
 
     useEffect(() => {
       if (location) {
-        map.flyTo([location.lat, location.lng], 15);
+        map.flyTo([location.lat, location.lng], map.getZoom());
       }
     }, [location, map]);
 
@@ -44,17 +44,9 @@ const MapSelector = ({ location, onLocationSelect }) => {
     );
   };
 
-  useEffect(() => {
-    if (!location && "geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition((pos) => {
-        setPosition([pos.coords.latitude, pos.coords.longitude]);
-      });
-    }
-  }, []);
-
   return (
     <div className="relative w-full h-full">
-      <MapContainer center={[position[0], position[1]]} zoom={13} style={{ height: '100%', width: '100%' }}>
+      <MapContainer center={[position[0], position[1]]} zoom={5} style={{ height: '100%', width: '100%' }}>
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

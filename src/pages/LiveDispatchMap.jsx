@@ -194,8 +194,8 @@ const LiveDispatchMap = () => {
 
       <div className="flex-1 relative">
          <MapContainer 
-            center={user && user.location ? [user.location.lat, user.location.lng] : (user && user.state === 'Maharashtra' ? [19.0760, 72.8777] : [20.5937, 78.9629])} 
-            zoom={user && user.location ? 13 : 5} 
+            center={[20.5937, 78.9629]} 
+            zoom={5} 
             style={{ height: '100%', width: '100%' }} 
             className="z-0"
          >
