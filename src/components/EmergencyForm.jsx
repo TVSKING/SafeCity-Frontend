@@ -99,13 +99,19 @@ const EmergencyForm = () => {
         (position) => {
           const { latitude, longitude } = position.coords;
           setFormData(prev => ({ ...prev, location: { lat: latitude, lng: longitude } }));
-          fetchStateFromCoords(latitude, longitude);
         },
         (err) => console.log("Location access denied or unavailable"),
         { enableHighAccuracy: true, timeout: 5000 }
       );
     }
   }, []);
+
+  // Update state detection whenever location changes
+  useEffect(() => {
+    if (formData.location.lat && formData.location.lng) {
+      fetchStateFromCoords(formData.location.lat, formData.location.lng);
+    }
+  }, [formData.location]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -139,19 +145,6 @@ const EmergencyForm = () => {
     }
   };
 
-  useEffect(() => {
-    // Try to get live location immediately on load
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setFormData(prev => ({ ...prev, location: { lat: latitude, lng: longitude } }));
-        },
-        (err) => console.log("Location access denied or unavailable"),
-        { enableHighAccuracy: true, timeout: 5000 }
-      );
-    }
-  }, []);
 
   const handleUseLiveLocation = () => {
     if ("geolocation" in navigator) {
@@ -300,10 +293,31 @@ const EmergencyForm = () => {
             <MapSelector location={formData.location} onLocationSelect={(loc) => setFormData({ ...formData, location: { lat: loc.lat, lng: loc.lng } })} />
           </div>
 
+          {/* State Detection Indicator */}
+          <div className="mb-4">
+            {detectedState ? (
+              <div className="p-3 bg-green-50 border border-green-100 rounded-xl flex items-center gap-2">
+                <CheckCircle2 className="text-green-600" size={16} />
+                <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">
+                  REGIONAL AREA: {detectedState}
+                </span>
+              </div>
+            ) : (
+              <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-center gap-2 animate-pulse">
+                <Clock className="text-blue-600" size={16} />
+                <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">
+                  DETECTING SERVICE AREA...
+                </span>
+              </div>
+            )}
+          </div>
+
           <button
             type="submit"
-            disabled={loading}
-            className="w-full py-4 bg-red-600 text-white rounded-[1.5rem] font-black text-lg hover:bg-red-700 shadow-2xl shadow-red-200 flex flex-col items-center justify-center gap-0 transition-all active:scale-95 disabled:opacity-50"
+            disabled={loading || !detectedState}
+            className={`w-full py-4 rounded-[1.5rem] font-black text-lg shadow-2xl transition-all active:scale-95 flex flex-col items-center justify-center gap-0 ${
+              loading || !detectedState ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 shadow-red-200'
+            }`}
           >
             {loading ? (
               <span className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></span>
@@ -311,9 +325,11 @@ const EmergencyForm = () => {
               <>
                 <div className="flex items-center gap-2">
                   <Send className="w-5 h-5" />
-                  REPORT NOW
+                  {detectedState ? 'REPORT NOW' : 'SELECT LOCATION'}
                 </div>
-                <span className="text-[10px] opacity-60 font-bold uppercase tracking-widest">Priority Broadcast Level {formData.triageLevel}</span>
+                <span className="text-[10px] opacity-60 font-bold uppercase tracking-widest">
+                  {detectedState ? `Priority Broadcast Level ${formData.triageLevel}` : 'Waiting for Map Selection'}
+                </span>
               </>
             )}
           </button>
