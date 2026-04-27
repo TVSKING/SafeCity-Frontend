@@ -254,7 +254,7 @@ const DepartmentDashboard = () => {
           </code>
         </div>
         <p className="mt-4 text-[10px] text-gray-500 font-mono">
-          SafeCity Node: {import.meta.env.VITE_API_URL || 'production-cluster-01'} | Protocol: Regional-Isolation-v2
+          SafeCity Node: {import.meta.env.VITE_API_URL || 'production-cluster-01'} | Protocol: v2.5.1-FINAL-SYNC
         </p>
       </div>
     </div>
