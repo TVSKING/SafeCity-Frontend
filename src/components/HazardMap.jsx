@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents, useMap } from 'react-leaflet';
 import axios from 'axios';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { AlertTriangle, Plus, X } from 'lucide-react';
+import { AlertTriangle, Plus, X, MapPin, Search, Navigation } from 'lucide-react';
 import { sanitizeInput } from '../utils/validation';
 
 // Fix for default marker icons in Leaflet
@@ -22,6 +22,11 @@ const HazardMap = () => {
   const [hazards, setHazards] = useState([]);
   const [newHazard, setNewHazard] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [mapCenter, setMapCenter] = useState([20.5937, 78.9629]); // India Center
+  const [zoom, setZoom] = useState(5);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  
   const [formData, setFormData] = useState({
     title: '',
     type: 'Gas Leak',
@@ -38,12 +43,44 @@ const HazardMap = () => {
     };
     fetchHazards();
 
-    // Fix for Leaflet maps getting "stuck" or grayed out on tab switch
+    // Auto-detect location
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        setMapCenter([pos.coords.latitude, pos.coords.longitude]);
+        setZoom(13);
+      });
+    }
+
     setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
     }, 200);
   }, []);
 
+  const handleSearch = async (e) => {
+    if (e) e.preventDefault();
+    if (!searchQuery) return;
+    setIsSearching(true);
+    try {
+      const { data } = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${searchQuery}&countrycodes=in`);
+      if (data.length > 0) {
+        const { lat, lon } = data[0];
+        setMapCenter([parseFloat(lat), parseFloat(lon)]);
+        setZoom(14);
+      }
+    } catch (err) {
+      console.error('Search failed', err);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const RecenterMap = ({ center, zoom }) => {
+    const map = useMap();
+    useEffect(() => {
+      map.setView(center, zoom);
+    }, [center, zoom]);
+    return null;
+  };
 
   const MapEvents = () => {
     useMapEvents({
@@ -80,9 +117,33 @@ const HazardMap = () => {
   };
 
   return (
-    <div className="h-[600px] w-full rounded-[3rem] overflow-hidden shadow-2xl relative border-4 border-white">
-      <MapContainer center={[22.3039, 70.8022]} zoom={13} style={{ height: '100%', width: '100%' }}>
+    <div className="h-[700px] w-full rounded-[3rem] overflow-hidden shadow-2xl relative border-4 border-white group">
+      {/* India-Wide Search Bar */}
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[1001] w-full max-w-md px-4">
+        <form onSubmit={handleSearch} className="bg-white/90 backdrop-blur-md p-2 rounded-2xl shadow-2xl border border-white flex items-center gap-2">
+          <div className="bg-red-50 p-2 rounded-xl text-red-600">
+            <MapPin size={20} />
+          </div>
+          <input 
+            type="text" 
+            placeholder="Search city, area or pincode in India..." 
+            className="flex-1 bg-transparent border-none outline-none font-bold text-sm text-gray-900"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <button 
+            type="submit"
+            disabled={isSearching}
+            className="bg-gray-900 text-white px-4 py-2 rounded-xl font-black text-[10px] hover:bg-black transition-all flex items-center gap-2"
+          >
+            {isSearching ? '...' : <><Search size={14} /> FIND</>}
+          </button>
+        </form>
+      </div>
+
+      <MapContainer center={mapCenter} zoom={zoom} style={{ height: '100%', width: '100%' }}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <RecenterMap center={mapCenter} zoom={zoom} />
         <MapEvents />
         
         {hazards.map((h, i) => (
@@ -119,7 +180,7 @@ const HazardMap = () => {
       </MapContainer>
 
       {showForm && (
-        <div className="absolute top-4 right-4 z-[1000] bg-white p-6 rounded-3xl shadow-2xl w-80 border border-gray-100 animate-in fade-in slide-in-from-right-4">
+        <div className="absolute top-24 right-4 z-[1000] bg-white p-6 rounded-3xl shadow-2xl w-80 border border-gray-100 animate-in fade-in slide-in-from-right-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-black text-gray-900 flex items-center gap-2">
               <AlertTriangle className="text-orange-500" /> Mark Hazard
@@ -161,8 +222,23 @@ const HazardMap = () => {
         </div>
       )}
 
-      <div className="absolute bottom-4 left-4 z-[1000] bg-white/80 backdrop-blur px-4 py-2 rounded-full text-[10px] font-bold text-gray-600 shadow-sm border border-white">
-        Click anywhere on map to mark a "No-Go" zone
+      <div className="absolute bottom-6 left-6 z-[1000] flex flex-col gap-2">
+        <button 
+           onClick={() => {
+             if ("geolocation" in navigator) {
+               navigator.geolocation.getCurrentPosition((pos) => {
+                 setMapCenter([pos.coords.latitude, pos.coords.longitude]);
+                 setZoom(15);
+               });
+             }
+           }}
+           className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-gray-900 hover:bg-red-600 hover:text-white transition-all active:scale-90 border border-gray-100"
+        >
+          <Navigation size={20} />
+        </button>
+        <div className="bg-white/80 backdrop-blur px-4 py-2 rounded-full text-[10px] font-bold text-gray-600 shadow-sm border border-white">
+          Click map to mark "No-Go" zone
+        </div>
       </div>
     </div>
   );

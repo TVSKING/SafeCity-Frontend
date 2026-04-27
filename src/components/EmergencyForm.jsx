@@ -110,6 +110,20 @@ const EmergencyForm = () => {
     }
   };
 
+  useEffect(() => {
+    // Try to get live location immediately on load
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setFormData(prev => ({ ...prev, location: { lat: latitude, lng: longitude } }));
+        },
+        (err) => console.log("Location access denied or unavailable"),
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    }
+  }, []);
+
   const handleUseLiveLocation = () => {
     if ("geolocation" in navigator) {
       setLoading(true);

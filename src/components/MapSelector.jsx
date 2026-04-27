@@ -44,6 +44,14 @@ const MapSelector = ({ location, onLocationSelect }) => {
     );
   };
 
+  useEffect(() => {
+    if (!location && "geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        setPosition([pos.coords.latitude, pos.coords.longitude]);
+      });
+    }
+  }, []);
+
   return (
     <div className="relative w-full h-full">
       <MapContainer center={[position[0], position[1]]} zoom={13} style={{ height: '100%', width: '100%' }}>
