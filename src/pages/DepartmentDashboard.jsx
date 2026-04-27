@@ -31,9 +31,14 @@ const DepartmentDashboard = () => {
         
         window.__TOTAL_IN_DB__ = data.totalInDb;
         window.__SYSTEM_STATUS__ = data;
+        window.__SYSTEM_ERROR__ = null;
         setAlerts(receivedAlerts); 
       }
-      catch (err) { console.error(err); }
+      catch (err) { 
+        console.error('📡 SERVER FETCH FAILED:', err);
+        window.__SYSTEM_ERROR__ = err.message || 'Unknown Network Error';
+        setAlerts([]); 
+      }
     };
     fetchAlerts();
     socket.on('newAlert', (newAlert) => {
@@ -249,9 +254,13 @@ const DepartmentDashboard = () => {
         {/* RAW QUERY DEBUG */}
         <div className="mt-6 p-4 bg-black/50 rounded-xl border border-white/5 font-mono text-[10px]">
           <p className="text-gray-500 mb-2 font-bold uppercase tracking-widest">Applied Backend Query</p>
-          <code className="text-red-400">
-            {window.__SYSTEM_STATUS__?.appliedQuery ? JSON.stringify(window.__SYSTEM_STATUS__.appliedQuery) : 'Waiting for server response...'}
-          </code>
+          {window.__SYSTEM_ERROR__ ? (
+            <code className="text-red-500 font-bold">❌ CONNECTION ERROR: {window.__SYSTEM_ERROR__}</code>
+          ) : (
+            <code className="text-red-400">
+              {window.__SYSTEM_STATUS__?.appliedQuery ? JSON.stringify(window.__SYSTEM_STATUS__.appliedQuery) : 'Waiting for server response...'}
+            </code>
+          )}
         </div>
         <p className="mt-4 text-[10px] text-gray-500 font-mono">
           SafeCity Node: {import.meta.env.VITE_API_URL || 'production-cluster-01'} | Protocol: v2.5.1-FINAL-SYNC
