@@ -22,11 +22,13 @@ const DepartmentDashboard = () => {
         const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
         const token = localStorage.getItem('token');
         window.__SYSTEM_LOADING__ = true;
-        const { data } = await axios.get(`${baseUrl}/api/alerts/department?deptType=${user.departmentType}`, {
+        const { data } = await axios.get(`${baseUrl}/api/alerts/department?deptType=${user.departmentType}&_t=${Date.now()}`, {
           headers: { Authorization: `Bearer ${token}` },
           timeout: 10000
         }); 
         window.__SYSTEM_LOADING__ = false;
+        
+        console.log('📡 RAW SERVER RESPONSE:', data);
         
         // Handle new response format: { alerts, totalInDb, appliedQuery }
         const receivedAlerts = data.alerts || (Array.isArray(data) ? data : []);
