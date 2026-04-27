@@ -60,7 +60,9 @@ const CollaborationHub = () => {
   const handleDeleteItem = async (id) => {
     if (!window.confirm('Are you sure you want to resolve/delete this resource?')) return;
     try {
-      await axios.delete(`$(import.meta.env.VITE_API_URL || "http://localhost:5000")/api/collaboration/marketplace/${id}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/collaboration/marketplace/${id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       setMarketplaceItems(prev => prev.filter(i => i._id !== id));
     } catch (err) { alert('Failed to delete'); }
   };
@@ -68,7 +70,9 @@ const CollaborationHub = () => {
   const handleDeletePerson = async (id) => {
     if (!window.confirm('Are you sure you want to mark this person as Found/Resolved?')) return;
     try {
-      await axios.delete(`$(import.meta.env.VITE_API_URL || "http://localhost:5000")/api/collaboration/missing-persons/${id}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/collaboration/missing-persons/${id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       setMissingPersons(prev => prev.filter(p => p._id !== id));
     } catch (err) { alert('Failed to delete'); }
   };
