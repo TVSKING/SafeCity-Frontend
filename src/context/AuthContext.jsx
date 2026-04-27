@@ -13,16 +13,19 @@ export const AuthProvider = ({ children }) => {
     const { user, token } = data;
     if (token) localStorage.setItem('token', token);
     
-    // Fetch fresh profile to ensure all fields like 'state' are current
+    console.log('🔑 Login Attempt | Data received:', data.user);
+
     try {
       const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
       const { data: freshUser } = await axios.get(`${baseUrl}/api/auth/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      console.log('✅ Profile Refresh Success:', freshUser.state);
       setUser(freshUser);
       localStorage.setItem('user', JSON.stringify(freshUser));
     } catch (err) {
-      // Fallback to login data if profile fetch fails
+      console.error('❌ Profile Refresh Failed. Falling back to login data.', err);
+      // Ensure we don't lose the state if it was in the initial login data
       setUser(user);
       localStorage.setItem('user', JSON.stringify(user));
     }
