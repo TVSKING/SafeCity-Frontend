@@ -21,9 +21,12 @@ const DepartmentDashboard = () => {
       try { 
         const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
         const token = localStorage.getItem('token');
+        window.__SYSTEM_LOADING__ = true;
         const { data } = await axios.get(`${baseUrl}/api/alerts/department?deptType=${user.departmentType}`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 10000
         }); 
+        window.__SYSTEM_LOADING__ = false;
         
         // Handle new response format: { alerts, totalInDb, appliedQuery }
         const receivedAlerts = data.alerts || (Array.isArray(data) ? data : []);
@@ -254,11 +257,13 @@ const DepartmentDashboard = () => {
         {/* RAW QUERY DEBUG */}
         <div className="mt-6 p-4 bg-black/50 rounded-xl border border-white/5 font-mono text-[10px]">
           <p className="text-gray-500 mb-2 font-bold uppercase tracking-widest">Applied Backend Query</p>
-          {window.__SYSTEM_ERROR__ ? (
+          {window.__SYSTEM_LOADING__ ? (
+            <code className="text-blue-400 animate-pulse">📡 CONNECTING TO SERVER... (WAITING FOR RESPONSE)</code>
+          ) : window.__SYSTEM_ERROR__ ? (
             <code className="text-red-500 font-bold">❌ CONNECTION ERROR: {window.__SYSTEM_ERROR__}</code>
           ) : (
             <code className="text-red-400">
-              {window.__SYSTEM_STATUS__?.appliedQuery ? JSON.stringify(window.__SYSTEM_STATUS__.appliedQuery) : 'Waiting for server response...'}
+              {window.__SYSTEM_STATUS__?.appliedQuery ? JSON.stringify(window.__SYSTEM_STATUS__.appliedQuery) : 'No query data available'}
             </code>
           )}
         </div>
