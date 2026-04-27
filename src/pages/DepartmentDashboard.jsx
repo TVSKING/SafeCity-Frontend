@@ -43,13 +43,19 @@ const DepartmentDashboard = () => {
   const checkRelevance = (alert) => {
     if (!user || !alert) return false;
     
-    // STRICT STATE CHECK: Only show if the alert's state matches the user's state
-    if (alert.state !== user.state) return false;
+    // FUZZY STATE CHECK: Ignore casing and whitespace
+    const alertState = alert.state ? alert.state.trim().toLowerCase() : '';
+    const userState = user.state ? user.state.trim().toLowerCase() : '';
+    
+    if (alertState !== userState) {
+      console.log(`🚫 Alert hidden: State mismatch ("${alertState}" vs "${userState}")`);
+      return false;
+    }
 
     const dept = user.departmentType;
     if (dept === 'police') return alert.assignedDepartment === 'police' || alert.type === 'Crime' || alert.type === 'Accident' || alert.type === 'SOS';
     if (dept === 'fire') return alert.assignedDepartment === 'fire' || alert.type === 'Fire' || alert.type === 'SOS';
-    if (dept === 'ambulance') return alert.assignedDepartment === 'ambulance' || alert.type === 'Medical' || alert.type === 'Accident' || alert.type === 'SOS';
+    if (dept === 'ambulance' || dept === 'medical') return alert.assignedDepartment === 'ambulance' || alert.assignedDepartment === 'medical' || alert.type === 'Medical' || alert.type === 'Accident' || alert.type === 'SOS';
     return alert.assignedDepartment === dept || alert.assignedDepartment === 'none';
   };
 
@@ -87,9 +93,9 @@ const DepartmentDashboard = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
         <div>
           <h1 className="text-4xl font-black text-gray-900 flex items-center gap-3">
-            <Activity className="text-red-600" /> {user.name} Operations
+            <Activity className="text-red-600" /> {user.name} <span className="text-gray-300 font-medium">({user.state || 'No State Assigned'})</span>
           </h1>
-          <p className="text-gray-500 font-medium">Real-time Response Command Center</p>
+          <p className="text-gray-500 font-medium">Regional Response Command Center</p>
         </div>
         
         <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-gray-100">
