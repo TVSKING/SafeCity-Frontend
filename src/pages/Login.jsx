@@ -17,7 +17,7 @@ const Login = () => {
     setError('');
     try {
       const { data } = await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/auth/login`, credentials);
-      login(data);
+      await login(data);
       if (data.user.role === 'admin') navigate('/admin');
       else navigate('/dashboard');
     } catch (err) {

@@ -53,21 +53,27 @@ const AdminDashboard = () => {
 
   const fetchSafetyChecks = async () => {
     try {
-      const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin-tools/safety-checks`);
+      const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin-tools/safety-checks`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       setSafetyChecks(data);
     } catch (err) { console.error(err); }
   };
 
   const fetchPendingItems = async () => {
     try {
-      const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin-tools/marketplace/pending`);
+      const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin-tools/marketplace/pending`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       setPendingItems(data);
     } catch (err) { console.error(err); }
   };
 
   const fetchActiveBroadcasts = async () => {
     try {
-      const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin-tools/broadcasts`);
+      const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin-tools/broadcasts`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       setActiveBroadcasts(data);
     } catch (err) { console.error(err); }
   };
@@ -75,7 +81,9 @@ const AdminDashboard = () => {
   const handleApproveItem = async (id) => {
     try {
       const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-      await axios.put(`${baseUrl}/api/admin-tools/marketplace/${id}/approve`);
+      await axios.put(`${baseUrl}/api/admin-tools/marketplace/${id}/approve`, {}, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       setPendingItems(prev => prev.filter(i => i._id !== id));
     } catch (err) { alert('Failed to approve'); }
   };
@@ -83,7 +91,9 @@ const AdminDashboard = () => {
   const handleRejectItem = async (id) => {
     try {
       const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-      await axios.put(`${baseUrl}/api/admin-tools/marketplace/${id}/reject`);
+      await axios.put(`${baseUrl}/api/admin-tools/marketplace/${id}/reject`, {}, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       setPendingItems(prev => prev.filter(i => i._id !== id));
     } catch (err) { alert('Failed to reject'); }
   };
@@ -93,6 +103,8 @@ const AdminDashboard = () => {
     try {
       await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin-tools/safety-checks/create`, {
         title: pulseTitle, area: pulseArea, isActive: true
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setPulseTitle('');
       setPulseArea('');
@@ -102,21 +114,32 @@ const AdminDashboard = () => {
 
   const fetchAlerts = async () => {
     try {
-      const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/admin`);
+      const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/admin`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       setAlerts(data);
     } catch (err) { console.error(err); }
   };
 
   const fetchVolunteers = async () => {
     try {
-      const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/collaboration/volunteers`);
+      const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/collaboration/volunteers`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       setVolunteers(data);
     } catch (err) { console.error(err); }
   };
 
 
   const handleReassign = async (alertId, dept) => {
-    try { await axios.put(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/assign`, { alertId, departmentType: dept }); }
+    try { 
+      await axios.put(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/assign`, 
+        { alertId, departmentType: dept },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
+      // Refresh local state
+      setAlerts(prev => prev.map(a => a._id === alertId ? { ...a, assignedDepartment: dept } : a));
+    }
     catch (err) { alert('Failed to reassign'); }
   };
 

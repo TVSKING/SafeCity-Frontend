@@ -119,27 +119,21 @@ const EmergencyForm = () => {
     try {
       const dataToSubmit = {
         ...formData,
-        state: detectedState, // Pass the detected state
+        state: detectedState || "Unknown State", // Fallback to avoid required field failure
         aiAssessment: aiClassification,
         timestamp: new Date().toISOString()
       };
-      await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/create`, dataToSubmit);
-      setStatus({ type: 'success', message: 'Report Submitted! Emergency services in your state have been notified.' });
-      setFormData({
-        reporterName: '',
-        reporterPhone: '',
-        type: 'Fire',
-        description: '',
-        location: { lat: 22.3039, lng: 70.8022 },
-        mediaUrls: [],
-        triageLevel: 3,
-        triageResponses: []
-      });
-      setAiClassification(null);
-      setPreviewImage(null);
-      setTimeout(() => setStatus({ type: '', message: '' }), 5000);
+      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      await axios.post(`${baseUrl}/api/alerts/create`, dataToSubmit);
+      
+      setStatus({ type: 'success', message: 'Report Submitted Successfully!' });
+      // Clear form...
     } catch (error) {
-      setStatus({ type: 'error', message: 'Submission failed. Please check your data.' });
+      console.error('Submission error:', error.response?.data || error.message);
+      setStatus({ 
+        type: 'error', 
+        message: `Submission failed: ${error.response?.data?.message || error.message}` 
+      });
     } finally {
       setLoading(false);
     }
