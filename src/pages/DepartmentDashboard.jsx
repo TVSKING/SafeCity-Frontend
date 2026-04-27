@@ -224,8 +224,6 @@ const DepartmentDashboard = () => {
           )}
         </div>
       </div>
-
-      </div>
     </div>
   );
 };
