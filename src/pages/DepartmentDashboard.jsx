@@ -262,9 +262,15 @@ const DepartmentDashboard = () => {
           ) : window.__SYSTEM_ERROR__ ? (
             <code className="text-red-500 font-bold">❌ CONNECTION ERROR: {window.__SYSTEM_ERROR__}</code>
           ) : (
-            <code className="text-red-400">
-              {window.__SYSTEM_STATUS__?.appliedQuery ? JSON.stringify(window.__SYSTEM_STATUS__.appliedQuery) : 'No query data available'}
-            </code>
+            <div className="flex flex-col gap-2">
+              <code className="text-red-400">
+                {window.__SYSTEM_STATUS__?.appliedQuery ? JSON.stringify(window.__SYSTEM_STATUS__.appliedQuery) : 'No query data available'}
+              </code>
+              <div className="flex items-center gap-4 text-gray-500 pt-2 border-t border-white/5">
+                <span>DB: <span className="text-green-500">{window.__SYSTEM_STATUS__?.dbName || 'unknown'}</span></span>
+                <span>Host: <span className="text-green-500">{window.__SYSTEM_STATUS__?.dbHost || 'unknown'}</span></span>
+              </div>
+            </div>
           )}
         </div>
         <p className="mt-4 text-[10px] text-gray-500 font-mono">
