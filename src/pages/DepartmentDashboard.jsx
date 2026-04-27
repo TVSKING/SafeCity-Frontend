@@ -4,7 +4,7 @@ import io from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import ResourceInventory from '../components/ResourceInventory';
-import { ShieldCheck, Activity, MapPin, CheckCircle, Clock, AlertCircle, PlayCircle, Phone, LayoutDashboard, Map as MapIcon, Zap, Send, Archive } from 'lucide-react';
+import { ShieldCheck, Activity, MapPin, CheckCircle, Clock, AlertCircle, PlayCircle, Phone, LayoutDashboard, Map as MapIcon, Zap, Send, Archive, ShieldAlert } from 'lucide-react';
 
 
 const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000");
@@ -24,8 +24,13 @@ const DepartmentDashboard = () => {
         const { data } = await axios.get(`${baseUrl}/api/alerts/department?deptType=${user.departmentType}`, {
           headers: { Authorization: `Bearer ${token}` }
         }); 
-        console.log(`📡 ALERTS RECEIVED FROM SERVER: ${data.length} items`);
-        setAlerts(Array.isArray(data) ? data : []); 
+        
+        // Handle new response format: { alerts, totalInDb, appliedQuery }
+        const receivedAlerts = data.alerts || (Array.isArray(data) ? data : []);
+        console.log(`📡 ALERTS RECEIVED FROM SERVER: ${receivedAlerts.length} items`);
+        
+        window.__TOTAL_IN_DB__ = data.totalInDb;
+        setAlerts(receivedAlerts); 
       }
       catch (err) { console.error(err); }
     };
@@ -215,6 +220,33 @@ const DepartmentDashboard = () => {
             </div>
           )}
         </div>
+      </div>
+
+      {/* TECHNICAL SYSTEM STATUS FOOTER */}
+      <div className="mt-20 p-6 bg-gray-900 rounded-[2rem] text-white overflow-hidden relative">
+        <div className="absolute top-0 right-0 p-8 opacity-10">
+          <Activity size={120} />
+        </div>
+        <h3 className="text-xl font-black mb-4 flex items-center gap-2">
+          <ShieldAlert className="text-red-500" /> SYSTEM DIAGNOSTICS
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+          <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
+            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Database Connectivity</p>
+            <p className="text-2xl font-black text-green-400">ONLINE</p>
+          </div>
+          <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
+            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Global Alert Pool</p>
+            <p className="text-2xl font-black">{window.__TOTAL_IN_DB__ || 0} Incident Records</p>
+          </div>
+          <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
+            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Active Region Filter</p>
+            <p className="text-2xl font-black text-blue-400">{user.state || 'None'}</p>
+          </div>
+        </div>
+        <p className="mt-4 text-[10px] text-gray-500 font-mono">
+          SafeCity Node: {import.meta.env.VITE_API_URL || 'production-cluster-01'} | Protocol: Regional-Isolation-v2
+        </p>
       </div>
     </div>
   );
