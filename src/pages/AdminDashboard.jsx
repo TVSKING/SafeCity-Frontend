@@ -4,7 +4,7 @@ import io from 'socket.io-client';
 import HazardMap from '../components/HazardMap';
 import {
   BarChart3, AlertCircle, CheckCircle, Clock, MapPin,
-  ExternalLink, ArrowRightLeft, Search, Filter, ShieldAlert, Radio, Activity, LayoutDashboard, Map as MapIcon, Users, Zap, Package, Check, X, Send
+  ExternalLink, ArrowRightLeft, Search, Filter, ShieldAlert, Radio, Activity, LayoutDashboard, Map as MapIcon, Users, Zap, Package, Check, X, Send, History
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
@@ -207,6 +207,7 @@ const AdminDashboard = () => {
   };
 
   const filteredAlerts = alerts
+    .filter(a => a.status !== 'Resolved') // Always exclude resolved from live feed
     .filter(a => filter === 'All' || a.status === filter)
     .filter(a =>
       (a.reporterName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -248,12 +249,20 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        <Link
-          to="/dispatch"
-          className="px-8 py-3 bg-red-600 text-white rounded-2xl font-black shadow-xl shadow-red-600/30 flex items-center gap-2 hover:bg-red-700 transition-all hover:-translate-y-1"
-        >
-          <Send size={18} /> OPEN LIVE DISPATCH MAP
-        </Link>
+        <div className="flex gap-4">
+          <Link
+            to="/admin/history"
+            className="px-8 py-3 bg-gray-100 text-gray-900 rounded-2xl font-black shadow-sm flex items-center gap-2 hover:bg-gray-200 transition-all hover:-translate-y-1"
+          >
+            <History size={18} /> VIEW HISTORY
+          </Link>
+          <Link
+            to="/dispatch"
+            className="px-8 py-3 bg-red-600 text-white rounded-2xl font-black shadow-xl shadow-red-600/30 flex items-center gap-2 hover:bg-red-700 transition-all hover:-translate-y-1"
+          >
+            <Send size={18} /> OPEN LIVE DISPATCH MAP
+          </Link>
+        </div>
       </div>
 
       {activeTab === 'overview' && (

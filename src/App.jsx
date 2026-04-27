@@ -15,6 +15,7 @@ import ManageInventory from './pages/ManageInventory';
 import Profile from './pages/Profile';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import IncidentHistory from './pages/IncidentHistory';
 import Navbar from './components/Navbar';
 import BroadcastNotification from './components/BroadcastNotification';
 import DemoDisclaimer from './components/DemoDisclaimer';
@@ -58,6 +59,11 @@ function App() {
             <Route path="/admin/accounts" element={
               <ProtectedRoute role="admin">
                 <ManageAccounts />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/history" element={
+              <ProtectedRoute role="admin">
+                <IncidentHistory />
               </ProtectedRoute>
             } />
 
