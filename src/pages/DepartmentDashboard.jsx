@@ -30,6 +30,7 @@ const DepartmentDashboard = () => {
         console.log(`📡 ALERTS RECEIVED FROM SERVER: ${receivedAlerts.length} items`);
         
         window.__TOTAL_IN_DB__ = data.totalInDb;
+        window.__SYSTEM_STATUS__ = data;
         setAlerts(receivedAlerts); 
       }
       catch (err) { console.error(err); }
@@ -243,6 +244,14 @@ const DepartmentDashboard = () => {
             <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Active Region Filter</p>
             <p className="text-2xl font-black text-blue-400">{user.state || 'None'}</p>
           </div>
+        </div>
+        
+        {/* RAW QUERY DEBUG */}
+        <div className="mt-6 p-4 bg-black/50 rounded-xl border border-white/5 font-mono text-[10px]">
+          <p className="text-gray-500 mb-2 font-bold uppercase tracking-widest">Applied Backend Query</p>
+          <code className="text-red-400">
+            {window.__SYSTEM_STATUS__?.appliedQuery ? JSON.stringify(window.__SYSTEM_STATUS__.appliedQuery) : 'Waiting for server response...'}
+          </code>
         </div>
         <p className="mt-4 text-[10px] text-gray-500 font-mono">
           SafeCity Node: {import.meta.env.VITE_API_URL || 'production-cluster-01'} | Protocol: Regional-Isolation-v2
