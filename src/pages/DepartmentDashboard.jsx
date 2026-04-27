@@ -4,6 +4,7 @@ import io from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import ResourceInventory from '../components/ResourceInventory';
+import HazardMap from '../components/HazardMap';
 import { ShieldCheck, Activity, MapPin, CheckCircle, Clock, AlertCircle, PlayCircle, Phone, LayoutDashboard, Map as MapIcon, Zap, Send, Archive, ShieldAlert } from 'lucide-react';
 
 
@@ -115,6 +116,12 @@ const DepartmentDashboard = () => {
             <LayoutDashboard size={18} /> Alerts
           </button>
           <button 
+            onClick={() => setActiveTab('map')}
+            className={`px-6 py-2 rounded-xl font-bold transition-all flex items-center gap-2 ${activeTab === 'map' ? 'bg-orange-600 text-white shadow-md shadow-orange-200' : 'text-gray-500 hover:bg-gray-50'}`}
+          >
+            <MapIcon size={18} /> Live Map
+          </button>
+          <button 
             onClick={() => setActiveTab('inventory')}
             className={`px-6 py-2 rounded-xl font-bold transition-all flex items-center gap-2 ${activeTab === 'inventory' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-gray-500 hover:bg-gray-50'}`}
           >
@@ -154,7 +161,7 @@ const DepartmentDashboard = () => {
 
         {/* Right Column: Alerts List or Full Inventory */}
         <div className="lg:col-span-3">
-          {activeTab === 'alerts' ? (
+          {activeTab === 'alerts' && (
             <div className="space-y-6">
               {alerts.filter(a => a.status !== 'Resolved').length === 0 && (
                 <div className="bg-white p-20 rounded-[3rem] border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400">
@@ -217,7 +224,15 @@ const DepartmentDashboard = () => {
                 </div>
               ))}
             </div>
-          ) : (
+          )}
+
+          {activeTab === 'map' && (
+            <div className="animate-in fade-in zoom-in h-[700px]">
+               <HazardMap stateFilter={user.state} showIncidents={true} />
+            </div>
+          )}
+
+          {activeTab === 'inventory' && (
             <div className="animate-in fade-in zoom-in">
                <ResourceInventory departmentType={user.departmentType} isFull={true} />
             </div>

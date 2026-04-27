@@ -3,7 +3,10 @@ import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents, useMap } 
 import axios from 'axios';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import io from 'socket.io-client';
 import { AlertTriangle, Plus, X, MapPin, Search, Navigation } from 'lucide-react';
+
+const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000");
 import { sanitizeInput } from '../utils/validation';
 
 // Fix for default marker icons in Leaflet
@@ -18,14 +21,25 @@ let DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const HazardMap = () => {
+const HazardMap = ({ stateFilter = null, showIncidents = false }) => {
   const [hazards, setHazards] = useState([]);
+  const [alerts, setAlerts] = useState([]);
   const [newHazard, setNewHazard] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [mapCenter, setMapCenter] = useState([20.5937, 78.9629]); // India Center
   const [zoom, setZoom] = useState(5);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+
+  const getEmoji = (type) => {
+    const t = type.toLowerCase();
+    if (t.includes('fire')) return '🔥';
+    if (t.includes('medical') || t.includes('ambulance')) return '🚑';
+    if (t.includes('police') || t.includes('crime')) return '🚓';
+    if (t.includes('accident')) return '💥';
+    if (t.includes('sos')) return '🚨';
+    return '⚠️';
+  };
   
   const [formData, setFormData] = useState({
     title: '',
@@ -41,7 +55,62 @@ const HazardMap = () => {
         setHazards(data);
       } catch (err) { console.error(err); }
     };
+
+    const fetchAlerts = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const url = stateFilter 
+          ? `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/department?deptType=all`
+          : `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/admin`;
+          
+        const { data } = await axios.get(url, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        
+        // Handle both admin (array) and department (object) responses
+        const received = data.alerts || (Array.isArray(data) ? data : []);
+        setAlerts(received.filter(a => a.status !== 'Resolved'));
+      } catch (err) { console.error(err); }
+    };
+
     fetchHazards();
+    if (showIncidents) fetchAlerts();
+
+    // Socket.io Real-time Updates
+    if (showIncidents) {
+      socket.on('newAlert', (newAlert) => {
+        // If stateFilter exists, only add if it matches (fuzzy)
+        if (stateFilter) {
+          const alertState = (newAlert.state || '').trim().toLowerCase();
+          const targetState = (stateFilter || '').trim().toLowerCase();
+          if (alertState !== targetState) return;
+        }
+        setAlerts(prev => [newAlert, ...prev.filter(a => a._id !== newAlert._id)]);
+      });
+
+      socket.on('alertUpdated', (updatedAlert) => {
+        if (updatedAlert.status === 'Resolved') {
+          setAlerts(prev => prev.filter(a => a._id !== updatedAlert._id));
+        } else {
+          setAlerts(prev => prev.map(a => a._id === updatedAlert._id ? updatedAlert : a));
+        }
+      });
+    }
+
+    // If state filter is provided...
+      setSearchQuery(stateFilter);
+      // Auto-trigger search for state
+      const triggerStateSearch = async () => {
+        try {
+          const { data } = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${stateFilter}&countrycodes=in`);
+          if (data.length > 0) {
+            setMapCenter([parseFloat(data[0].lat), parseFloat(data[0].lon)]);
+            setZoom(7);
+          }
+        } catch (err) {}
+      };
+      triggerStateSearch();
+    }
 
     // Auto-detect location
     if ("geolocation" in navigator) {
@@ -172,6 +241,27 @@ const HazardMap = () => {
               }} 
             />
           </React.Fragment>
+        ))}
+
+        {showIncidents && alerts.map((alert) => (
+          <Marker 
+            key={alert._id} 
+            position={[alert.location.lat, alert.location.lng]}
+            icon={L.divIcon({
+              className: 'custom-div-icon',
+              html: `<div style="font-size: 30px; background: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid white;">${getEmoji(alert.type)}</div>`,
+              iconSize: [40, 40],
+              iconAnchor: [20, 20]
+            })}
+          >
+            <Popup>
+              <div className="p-2">
+                <div className="font-black text-gray-900">{alert.type.toUpperCase()}</div>
+                <div className="text-xs text-gray-500 mb-2">{alert.description || 'No description'}</div>
+                <div className="text-[10px] font-bold text-red-600 uppercase">STATUS: {alert.status}</div>
+              </div>
+            </Popup>
+          </Marker>
         ))}
 
         {newHazard && (
