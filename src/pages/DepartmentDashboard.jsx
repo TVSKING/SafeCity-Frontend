@@ -103,7 +103,7 @@ const DepartmentDashboard = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
         <div>
           <h1 className="text-4xl font-black text-gray-900 flex items-center gap-3">
-            <Activity className="text-red-600" /> {user.name} <span className="text-gray-300 font-medium">({user.state || 'No State Assigned'})</span>
+            <Activity className="text-red-600" /> {user.name}
           </h1>
           <p className="text-gray-500 font-medium">Regional Response Command Center</p>
         </div>
@@ -228,7 +228,7 @@ const DepartmentDashboard = () => {
 
           {activeTab === 'map' && (
             <div className="animate-in fade-in zoom-in h-[700px]">
-               <HazardMap stateFilter={user.state} showIncidents={true} />
+               <HazardMap stateFilter={user.state} showIncidents={true} onUpdateStatus={updateStatus} />
             </div>
           )}
 

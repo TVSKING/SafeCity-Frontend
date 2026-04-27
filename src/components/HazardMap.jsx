@@ -21,7 +21,7 @@ let DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const HazardMap = ({ stateFilter = null, showIncidents = false }) => {
+const HazardMap = ({ stateFilter = null, showIncidents = false, onUpdateStatus = null }) => {
   const [hazards, setHazards] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [newHazard, setNewHazard] = useState(null);
@@ -265,10 +265,35 @@ const HazardMap = ({ stateFilter = null, showIncidents = false }) => {
             })}
           >
             <Popup>
-              <div className="p-2">
-                <div className="font-black text-gray-900">{alert.type.toUpperCase()}</div>
-                <div className="text-xs text-gray-500 mb-2">{alert.description || 'No description'}</div>
-                <div className="text-[10px] font-bold text-red-600 uppercase">STATUS: {alert.status}</div>
+              <div className="p-3 min-w-[200px]">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="font-black text-gray-900 text-lg">{alert.type.toUpperCase()}</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase ${
+                    alert.status === 'Pending' ? 'bg-red-100 text-red-600' :
+                    alert.status === 'Accepted' ? 'bg-blue-100 text-blue-600' :
+                    'bg-orange-100 text-orange-600'
+                  }`}>{alert.status}</span>
+                </div>
+                <div className="text-xs text-gray-600 mb-4 line-clamp-2">{alert.description || 'No description provided.'}</div>
+                
+                <div className="flex flex-col gap-2">
+                  <button 
+                    onClick={() => window.open(`https://www.google.com/maps?q=${alert.location.lat},${alert.location.lng}`)} 
+                    className="w-full py-2 bg-gray-900 text-white rounded-lg text-[10px] font-black flex items-center justify-center gap-2"
+                  >
+                    <Navigation size={12} /> NAVIGATE
+                  </button>
+                  
+                  {onUpdateStatus && alert.status === 'Pending' && (
+                    <button onClick={() => onUpdateStatus(alert._id, 'Accepted')} className="w-full py-2 bg-red-600 text-white rounded-lg text-[10px] font-black">ACCEPT MISSION</button>
+                  )}
+                  {onUpdateStatus && alert.status === 'Accepted' && (
+                    <button onClick={() => onUpdateStatus(alert._id, 'In Progress')} className="w-full py-2 bg-orange-500 text-white rounded-lg text-[10px] font-black">START RESPONSE</button>
+                  )}
+                  {onUpdateStatus && alert.status === 'In Progress' && (
+                    <button onClick={() => onUpdateStatus(alert._id, 'Resolved')} className="w-full py-2 bg-green-600 text-white rounded-lg text-[10px] font-black">MARK RESOLVED</button>
+                  )}
+                </div>
               </div>
             </Popup>
           </Marker>

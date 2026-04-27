@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { User, Mail, MapPin, Phone, FileText, Camera, Save, CheckCircle, KeyRound } from 'lucide-react';
+import { User, Mail, MapPin, Phone, FileText, Camera, Save, CheckCircle, KeyRound, ShieldCheck } from 'lucide-react';
 import { sanitizeInput } from '../utils/validation';
 
 const Profile = () => {
@@ -127,6 +127,19 @@ const Profile = () => {
                       className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-red-600 font-bold" 
                       value={profile.name}
                       onChange={(e) => setProfile({...profile, name: sanitizeInput(e.target.value, 'text')})}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Assigned Jurisdiction (State)</label>
+                  <div className="relative">
+                    <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <input 
+                      disabled
+                      type="text" 
+                      className="w-full pl-12 pr-4 py-3 bg-gray-100 rounded-2xl border-none outline-none cursor-not-allowed font-black text-gray-500 uppercase tracking-widest" 
+                      value={user?.state || 'National'}
                     />
                   </div>
                 </div>

@@ -414,7 +414,7 @@ const AdminDashboard = () => {
               </h3>
               <p className="text-gray-500 font-medium">Mark "No-Go" zones and infrastructure collapses in real-time.</p>
             </div>
-            <HazardMap />
+            <HazardMap showIncidents={true} />
           </div>
         </div>
       )}
