@@ -16,7 +16,7 @@ const EmergencyForm = () => {
     triageLevel: 3,
     triageResponses: []
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState({ type: '', message: '' });
   const [showTriage, setShowTriage] = useState(false);
@@ -79,17 +79,46 @@ const EmergencyForm = () => {
     }
   };
 
+  const [detectedState, setDetectedState] = useState('');
+
+  const fetchStateFromCoords = async (lat, lng) => {
+    try {
+      const { data } = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+      if (data.address && data.address.state) {
+        setDetectedState(data.address.state);
+      }
+    } catch (err) {
+      console.error("Failed to fetch state", err);
+    }
+  };
+
+  useEffect(() => {
+    // Try to get live location immediately on load
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setFormData(prev => ({ ...prev, location: { lat: latitude, lng: longitude } }));
+          fetchStateFromCoords(latitude, longitude);
+        },
+        (err) => console.log("Location access denied or unavailable"),
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    }
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
       const dataToSubmit = {
         ...formData,
+        state: detectedState, // Pass the detected state
         aiAssessment: aiClassification,
         timestamp: new Date().toISOString()
       };
       await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/create`, dataToSubmit);
-      setStatus({ type: 'success', message: 'Report Submitted! Emergency services have been notified.' });
+      setStatus({ type: 'success', message: 'Report Submitted! Emergency services in your state have been notified.' });
       setFormData({
         reporterName: '',
         reporterPhone: '',
@@ -150,7 +179,7 @@ const EmergencyForm = () => {
   return (
     <div className={`glass p-8 rounded-3xl max-w-4xl mx-auto border-red-100 shadow-2xl relative overflow-hidden transition-all duration-500 ${isLowPower ? 'grayscale invert bg-black' : ''}`}>
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 via-orange-500 to-red-600 animate-gradient-x"></div>
-      
+
       {/* Header */}
       <div className="flex justify-between items-start mb-8">
         <div className="text-left">
@@ -160,7 +189,7 @@ const EmergencyForm = () => {
           </h2>
           <p className="text-gray-500 font-medium">Smart Triage & Multimodal Reporting</p>
         </div>
-        <button 
+        <button
           onClick={() => setIsLowPower(!isLowPower)}
           className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-xs transition-all ${isLowPower ? 'bg-white text-black' : 'bg-gray-100 text-gray-600'}`}
         >
@@ -236,8 +265,8 @@ const EmergencyForm = () => {
                 {aiClassification ? 'RE-UPLOAD' : 'PHOTO/IMAGE'}
               </label>
             </div>
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={toggleRecording}
               className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-bold transition-all text-xs border border-dashed ${isRecording ? 'bg-red-50 text-red-600 border-red-200 animate-pulse' : 'bg-gray-50 text-gray-600 border-gray-300'}`}
             >
@@ -259,8 +288,8 @@ const EmergencyForm = () => {
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Incident Location</label>
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={handleUseLiveLocation}
               className="flex items-center gap-1.5 text-[10px] font-black text-red-600 bg-red-50 px-3 py-1.5 rounded-full hover:bg-red-100 transition-all border border-red-100"
             >
@@ -270,7 +299,7 @@ const EmergencyForm = () => {
           <div className="rounded-[2rem] overflow-hidden border-2 border-gray-100 shadow-inner h-[280px]">
             <MapSelector location={formData.location} onLocationSelect={(loc) => setFormData({ ...formData, location: { lat: loc.lat, lng: loc.lng } })} />
           </div>
-          
+
           <button
             type="submit"
             disabled={loading}
@@ -288,7 +317,7 @@ const EmergencyForm = () => {
               </>
             )}
           </button>
-          
+
           <div className="flex items-center justify-center gap-4 py-2 opacity-40 grayscale">
             <img src="https://upload.wikimedia.org/wikipedia/commons/b/bd/Google_Maps_Logo_2020.svg" className="h-4" alt="Google Maps" />
             <span className="h-4 w-[1px] bg-gray-400"></span>
@@ -299,13 +328,13 @@ const EmergencyForm = () => {
         </div>
       </form>
 
-      <AITriage 
-        isOpen={showTriage} 
-        onClose={() => setShowTriage(false)} 
+      <AITriage
+        isOpen={showTriage}
+        onClose={() => setShowTriage(false)}
         onComplete={(level, responses) => {
           setFormData(prev => ({ ...prev, triageLevel: level, triageResponses: responses }));
           setShowTriage(false);
-        }} 
+        }}
       />
     </div>
   );
