@@ -97,7 +97,8 @@ const HazardMap = ({ stateFilter = null, showIncidents = false }) => {
       });
     }
 
-    // If state filter is provided...
+    // If state filter is provided, try to focus map on that state
+    if (stateFilter) {
       setSearchQuery(stateFilter);
       // Auto-trigger search for state
       const triggerStateSearch = async () => {
