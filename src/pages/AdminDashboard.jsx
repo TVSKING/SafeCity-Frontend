@@ -218,51 +218,59 @@ const AdminDashboard = () => {
   return (
     <div className="max-w-[1600px] mx-auto px-6 py-8">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
+      {/* Tier 1: Identity & Primary Actions */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
         <div>
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-            <ShieldAlert className="text-red-600" /> Command Center
+          <h1 className="text-5xl font-black text-gray-900 tracking-tight flex items-center gap-4">
+            <div className="p-3 bg-red-600 rounded-2xl shadow-lg shadow-red-200">
+              <ShieldAlert className="text-white" size={32} />
+            </div>
+            Command Center
           </h1>
-          <p className="text-gray-500 mt-1 font-medium flex items-center gap-2">
+          <p className="text-gray-500 mt-2 font-bold flex items-center gap-2 px-1">
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            City-wide Operations Network Active
+            NATIONAL SECURITY OPERATIONS NETWORK ACTIVE
           </p>
         </div>
 
-        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
-          {[
-            { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-            { id: 'hazards', label: 'Hazard Map', icon: MapIcon },
-            { id: 'safety', label: 'Safety Pulse', icon: Radio },
-            { id: 'volunteers', label: 'Volunteers', icon: Users },
-            { id: 'approvals', label: 'Approvals', icon: Package },
-            { id: 'analytics', label: 'Analytics', icon: BarChart3 }
-          ].map(tab => (
-
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id ? 'bg-red-600 text-white shadow-lg shadow-red-100' : 'text-gray-500 hover:bg-gray-50'}`}
-            >
-              <tab.icon size={18} /> {tab.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-4">
           <Link
             to="/admin/history"
-            className="px-8 py-3 bg-gray-100 text-gray-900 rounded-2xl font-black shadow-sm flex items-center gap-2 hover:bg-gray-200 transition-all hover:-translate-y-1"
+            className="px-6 py-4 bg-white text-gray-900 rounded-[1.5rem] font-black shadow-sm border border-gray-100 flex items-center gap-2 hover:bg-gray-50 transition-all hover:-translate-y-1 active:scale-95"
           >
-            <History size={18} /> VIEW HISTORY
+            <History size={20} className="text-red-600" /> ARCHIVE VAULT
           </Link>
           <Link
             to="/dispatch"
-            className="px-8 py-3 bg-red-600 text-white rounded-2xl font-black shadow-xl shadow-red-600/30 flex items-center gap-2 hover:bg-red-700 transition-all hover:-translate-y-1"
+            className="px-8 py-4 bg-gray-900 text-white rounded-[1.5rem] font-black shadow-2xl shadow-gray-200 flex items-center gap-2 hover:bg-black transition-all hover:-translate-y-1 active:scale-95 border-b-4 border-red-600"
           >
-            <Send size={18} /> OPEN LIVE DISPATCH MAP
+            <Send size={20} className="text-red-500" /> LIVE DISPATCH CENTER
           </Link>
         </div>
+      </div>
+
+      {/* Tier 2: Operational Navigation */}
+      <div className="flex bg-white/80 backdrop-blur-md p-2 rounded-[2rem] shadow-xl border border-white mb-10 overflow-x-auto sticky top-4 z-50">
+        {[
+          { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
+          { id: 'hazards', label: 'Hazard Map', icon: MapIcon },
+          { id: 'safety', label: 'Safety Pulse', icon: Radio },
+          { id: 'volunteers', label: 'Volunteers', icon: Users },
+          { id: 'approvals', label: 'Approvals', icon: Package },
+          { id: 'analytics', label: 'Analytics', icon: BarChart3 }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex-1 px-8 py-4 rounded-[1.5rem] font-black transition-all flex items-center justify-center gap-3 whitespace-nowrap ${
+              activeTab === tab.id 
+              ? 'bg-red-600 text-white shadow-xl shadow-red-100' 
+              : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50/50'
+            }`}
+          >
+            <tab.icon size={20} /> {tab.label.toUpperCase()}
+          </button>
+        ))}
       </div>
 
       {activeTab === 'overview' && (
