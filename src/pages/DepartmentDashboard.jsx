@@ -41,7 +41,11 @@ const DepartmentDashboard = () => {
   }, [user]);
 
   const checkRelevance = (alert) => {
-    if (!user) return false;
+    if (!user || !alert) return false;
+    
+    // STRICT STATE CHECK: Only show if the alert's state matches the user's state
+    if (alert.state !== user.state) return false;
+
     const dept = user.departmentType;
     if (dept === 'police') return alert.assignedDepartment === 'police' || alert.type === 'Crime' || alert.type === 'Accident' || alert.type === 'SOS';
     if (dept === 'fire') return alert.assignedDepartment === 'fire' || alert.type === 'Fire' || alert.type === 'SOS';

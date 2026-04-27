@@ -43,7 +43,12 @@ const LiveDispatchMap = () => {
     const fetchHazards = async () => {
       try {
         const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin-tools/hazards`);
-        setHazards(data);
+        // Filter hazards by user's state
+        if (user && user.state) {
+          setHazards(data.filter(h => h.state === user.state));
+        } else {
+          setHazards(data);
+        }
       } catch (err) {}
     };
     
@@ -64,8 +69,11 @@ const LiveDispatchMap = () => {
     fetchResources();
 
     socket.on('newDeployment', (dep) => {
-       dep.startTime = Date.now();
-       setDeployments(prev => [...prev, dep]);
+       // Only show deployments in our state
+       if (user && user.state && dep.state === user.state) {
+          dep.startTime = Date.now();
+          setDeployments(prev => [...prev, dep]);
+       }
     });
 
     return () => socket.off('newDeployment');
@@ -185,7 +193,12 @@ const LiveDispatchMap = () => {
       </div>
 
       <div className="flex-1 relative">
-         <MapContainer center={[22.3039, 70.8022]} zoom={13} style={{ height: '100%', width: '100%' }} className="z-0">
+         <MapContainer 
+            center={user && user.location ? [user.location.lat, user.location.lng] : (user && user.state === 'Maharashtra' ? [19.0760, 72.8777] : [20.5937, 78.9629])} 
+            zoom={user && user.location ? 13 : 5} 
+            style={{ height: '100%', width: '100%' }} 
+            className="z-0"
+         >
             <TileLayer
                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
