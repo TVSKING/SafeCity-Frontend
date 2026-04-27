@@ -24,6 +24,7 @@ const DepartmentDashboard = () => {
         const { data } = await axios.get(`${baseUrl}/api/alerts/department?deptType=${user.departmentType}`, {
           headers: { Authorization: `Bearer ${token}` }
         }); 
+        console.log(`📡 ALERTS RECEIVED FROM SERVER: ${data.length} items`);
         setAlerts(Array.isArray(data) ? data : []); 
       }
       catch (err) { console.error(err); }
