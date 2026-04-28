@@ -63,8 +63,20 @@ const LiveDispatchMap = () => {
         const { data } = await axios.get(`${baseUrl}/api/resources/${fetchType}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setResources(data);
-        if (data.length > 0) setSelectedResource(data[0]._id);
+        
+        // GROUP BY NAME AND SUM QUANTITY
+        const grouped = data.reduce((acc, current) => {
+           const existing = acc.find(item => item.name.toLowerCase() === current.name.toLowerCase());
+           if (existing) {
+              existing.quantity += current.quantity;
+           } else {
+              acc.push({ ...current });
+           }
+           return acc;
+        }, []);
+
+        setResources(grouped);
+        if (grouped.length > 0) setSelectedResource(grouped[0]._id);
       } catch (err) {}
     };
 
