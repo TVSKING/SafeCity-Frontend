@@ -43,7 +43,6 @@ const LiveDispatchMap = () => {
     const fetchHazards = async () => {
       try {
         const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin-tools/hazards`);
-        // FUZZY STATE FILTER: Ignore casing, but show if state is missing
         if (user && user.state) {
           const uState = user.state.trim().toLowerCase();
           setHazards(data.filter(h => {
@@ -72,20 +71,17 @@ const LiveDispatchMap = () => {
     fetchHazards();
     fetchResources();
 
+    socket.on('newAlert', () => fetchHazards()); // Refresh hazards on new alerts
+
     socket.on('newDeployment', (dep) => {
-       // FUZZY STATE FILTER: Ignore casing
-       if (user && user.state && dep.state) {
-          if (dep.state.trim().toLowerCase() === user.state.trim().toLowerCase()) {
-             dep.startTime = Date.now();
-             setDeployments(prev => [...prev, dep]);
-          }
-       } else {
-          dep.startTime = Date.now();
-          setDeployments(prev => [...prev, dep]);
-       }
+       dep.startTime = Date.now();
+       setDeployments(prev => [...prev, dep]);
     });
 
-    return () => socket.off('newDeployment');
+    return () => {
+      socket.off('newAlert');
+      socket.off('newDeployment');
+    };
   }, [user]);
 
   useEffect(() => {
@@ -105,24 +101,6 @@ const LiveDispatchMap = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const knownLocations = {
-    'Kuvadava Road, Rajkot': { lat: 22.3175, lng: 70.8250 },
-    'Bhaktinagar Station Plot, Rajkot': { lat: 22.2886, lng: 70.8033 },
-    'Gandhigram Main Road, Rajkot': { lat: 22.3082, lng: 70.7816 },
-    'Malaviya Nagar, Rajkot': { lat: 22.2798, lng: 70.7963 },
-    'Pradyuman Nagar, Rajkot': { lat: 22.2964, lng: 70.7936 },
-    'Mochi Bazar, Rajkot': { lat: 22.3031, lng: 70.8021 },
-    'Nirmala Convent Road, Rajkot': { lat: 22.2961, lng: 70.7766 },
-    'Raiya Road, Rajkot': { lat: 22.3035, lng: 70.7712 },
-    'Civil Hospital Chowk, Jamnagar Road, Rajkot': { lat: 22.3060, lng: 70.8010 },
-    'Malaviya Nagar Main Road, Rajkot': { lat: 22.2800, lng: 70.7960 },
-    '150 Ring Road, Rajkot': { lat: 22.2825, lng: 70.7681 },
-    'Kalawad Road, Rajkot': { lat: 22.2855, lng: 70.7715 },
-    'Ahmedabad Station': { lat: 23.0225, lng: 72.5714 },
-    'Jala Station': { lat: 20.9467, lng: 72.9520 },
-    'SafeCity HQ': { lat: 20.5937, lng: 78.9629 }
-  };
-
   const triggerDeploy = async (hazard) => {
     const resource = resources.find(r => r._id === selectedResource);
     if (!resource) return alert('Please select a resource');
@@ -136,34 +114,19 @@ const LiveDispatchMap = () => {
       });
       setResources(resources.map(r => r._id === resource._id ? { ...r, quantity: r.quantity - deployQty } : r));
 
-      let startLat = 23.0225; // Default Base: Ahmedabad
-      let startLng = 72.5714; // Default Base: Ahmedabad
+      // --- ABSOLUTE STATION OVERRIDE ---
+      let startLat = 23.0225; // Default: Ahmedabad
+      let startLng = 72.5714; // Default: Ahmedabad
 
-      // AGGRESSIVE STATION DETECTION
-      const userRef = (user.address || user.name || user.email || '').toLowerCase();
-      if (userRef.includes('ahmedabad') || userRef.includes('ahme') || userRef.includes('ahm')) {
-         startLat = knownLocations['Ahmedabad Station'].lat;
-         startLng = knownLocations['Ahmedabad Station'].lng;
-         console.log('📍 Station Match: Ahmedabad');
-      } else if (userRef.includes('jala')) {
-         startLat = knownLocations['Jala Station'].lat;
-         startLng = knownLocations['Jala Station'].lng;
-         console.log('📍 Station Match: Jala');
-      } else if (user && user.address && knownLocations[user.address]) {
-         startLat = knownLocations[user.address].lat;
-         startLng = knownLocations[user.address].lng;
-      } else if (user && user.address) {
-         try {
-            const { data: geoData } = await axios.get(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(user.address)}&format=json&limit=1`, {
-              headers: { 'Accept-Language': 'en-US,en;q=0.9' }
-            });
-            if (geoData && geoData.length > 0) {
-               startLat = parseFloat(geoData[0].lat);
-               startLng = parseFloat(geoData[0].lon);
-            }
-         } catch (geoErr) {
-            console.warn('Geocoding failed, falling back to HQ', geoErr);
-         }
+      const uRef = (user.name || user.address || user.email || '').toLowerCase();
+      if (uRef.includes('jala')) {
+         startLat = 20.9467;
+         startLng = 72.9520;
+         console.log("📍 Station Match: Jala Station");
+      } else if (uRef.includes('ahme') || uRef.includes('ahm')) {
+         startLat = 23.0225;
+         startLng = 72.5714;
+         console.log("📍 Station Match: Ahmedabad Station");
       }
 
       const newDeployment = {
@@ -178,12 +141,12 @@ const LiveDispatchMap = () => {
         endLat: hazard.location.lat,
         endLng: hazard.location.lng,
         startTime: Date.now(),
-        duration: 60000, 
+        duration: 30000, // Faster ETA for testing (30s)
         progress: 0
       };
 
       await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/resources/deploy`, newDeployment);
-      alert(`Dispatching ${deployQty}x ${resource.name}. ETA: 1 Minute.`);
+      alert(`Dispatching ${deployQty}x ${resource.name}. ETA: 30 Seconds.`);
     } catch (err) {
       alert('Deployment failed');
     }
@@ -200,11 +163,11 @@ const LiveDispatchMap = () => {
                <h1 className="text-3xl font-black flex items-center gap-3">
                   <Zap className="text-red-500 animate-pulse" /> LIVE DISPATCH COMMAND
                </h1>
-               <p className="text-gray-500 font-bold text-sm">Select a hazard zone on the map to deploy units. ETA: 60 seconds.</p>
+               <p className="text-gray-500 font-bold text-sm">Select a hazard zone on the map to deploy units. ETA: 30 seconds.</p>
             </div>
          </div>
          <div className="flex gap-4">
-            <div className="bg-gray-50 border border-gray-200 px-6 py-3 rounded-2xl">
+            <div className="bg-gray-50 border border-gray-200 px-6 py-3 rounded-2xl text-center">
                <p className="text-[10px] uppercase text-gray-400 font-black tracking-widest">Active Units</p>
                <p className="text-2xl font-black text-green-600">{deployments.length}</p>
             </div>
@@ -220,7 +183,6 @@ const LiveDispatchMap = () => {
          >
             <TileLayer
                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
             />
 
             {hazards.map((hazard) => (
@@ -228,55 +190,36 @@ const LiveDispatchMap = () => {
                   key={hazard._id}
                   center={[hazard.location.lat, hazard.location.lng]}
                   radius={hazard.radius || 1000}
-                  pathOptions={{ 
-                     color: '#ef4444', 
-                     fillColor: '#ef4444', 
-                     fillOpacity: 0.3,
-                     weight: 2
-                  }}
+                  pathOptions={{ color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.3 }}
                >
-                  <Popup className="custom-popup">
-                     <div className="p-2 min-w-[250px]">
-                        <h3 className="text-lg font-black text-red-600 uppercase mb-1">{hazard.type} ZONE</h3>
-                        <p className="text-xs text-gray-500 font-bold mb-4">{hazard.description || 'High-risk area. Deployment requested.'}</p>
+                  <Popup>
+                     <div className="p-2 min-w-[200px]">
+                        <h3 className="text-lg font-black text-red-600 mb-2">{hazard.type.toUpperCase()}</h3>
+                        <p className="text-xs font-bold text-gray-500 mb-4">{hazard.title}</p>
                         
-                        {user.role === 'admin' ? (
-                           <div className="bg-red-50 p-4 rounded-xl border border-red-100">
-                              <p className="text-sm font-bold text-red-600 uppercase">Observer Mode</p>
-                              <p className="text-xs text-gray-600 font-medium mt-1">Waiting for departments to dispatch resources to this zone...</p>
-                           </div>
-                        ) : (
-                           <div className="space-y-3">
-                              <div>
-                                 <label className="text-[10px] font-black uppercase text-gray-400 block mb-1">Resource</label>
-                              <select 
-                                 className="w-full bg-gray-100 border-none p-2 rounded-lg font-bold text-sm outline-none"
-                                 value={selectedResource}
-                                 onChange={e => setSelectedResource(e.target.value)}
-                              >
-                                 {resources.map(r => (
-                                    <option key={r._id} value={r._id}>[{r.departmentType.toUpperCase()}] {r.name} ({r.quantity} left)</option>
-                                 ))}
-                              </select>
-                           </div>
-                           <div>
-                              <label className="text-[10px] font-black uppercase text-gray-400 block mb-1">Quantity</label>
-                              <input 
-                                 type="number" 
-                                 min="1"
-                                 value={deployQty}
-                                 onChange={e => setDeployQty(parseInt(e.target.value))}
-                                 className="w-full bg-gray-100 border-none p-2 rounded-lg font-bold text-sm outline-none"
-                              />
-                           </div>
+                        <div className="space-y-3">
+                           <select 
+                              className="w-full bg-gray-100 p-2 rounded-lg font-bold text-sm"
+                              value={selectedResource}
+                              onChange={e => setSelectedResource(e.target.value)}
+                           >
+                              {resources.map(r => (
+                                 <option key={r._id} value={r._id}>[{r.departmentType.toUpperCase()}] {r.name}</option>
+                              ))}
+                           </select>
+                           <input 
+                              type="number" 
+                              value={deployQty}
+                              onChange={e => setDeployQty(parseInt(e.target.value))}
+                              className="w-full bg-gray-100 p-2 rounded-lg font-bold text-sm"
+                           />
                            <button 
                               onClick={() => triggerDeploy(hazard)}
-                              className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-black rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mt-2"
+                              className="w-full py-3 bg-red-600 text-white font-black rounded-xl"
                            >
-                              <Send size={16} /> DISPATCH UNITS
+                              DISPATCH NOW
                            </button>
                         </div>
-                        )}
                      </div>
                   </Popup>
                </Circle>
@@ -285,40 +228,16 @@ const LiveDispatchMap = () => {
             {deployments.map(d => {
                const currentLat = d.startLat + (d.endLat - d.startLat) * d.progress;
                const currentLng = d.startLng + (d.endLng - d.startLng) * d.progress;
-               
                return (
                   <Marker 
                      key={d.id} 
                      position={[currentLat, currentLng]} 
                      icon={createVehicleIcon(d.vehicleType)}
-                     zIndexOffset={1000}
-                  >
-                     <Popup>
-                        <div className="font-bold text-center">
-                           <p className="text-sm uppercase text-blue-600 mb-1">{d.vehicleType} UNIT</p>
-                           <p className="text-xs text-gray-600">Carrying: {d.qty}x {d.resourceName}</p>
-                           {d.progress < 1 ? (
-                              <p className="text-[10px] text-orange-500 mt-2">En Route... {Math.round(d.progress * 100)}%</p>
-                           ) : (
-                              <p className="text-[10px] text-green-500 mt-2 font-black">ARRIVED</p>
-                           )}
-                        </div>
-                     </Popup>
-                  </Marker>
+                  />
                );
             })}
          </MapContainer>
       </div>
-
-      <style>{`
-         .custom-popup .leaflet-popup-content-wrapper {
-            border-radius: 1.5rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-         }
-         .custom-popup .leaflet-popup-tip {
-            display: none;
-         }
-      `}</style>
     </div>
   );
 };
