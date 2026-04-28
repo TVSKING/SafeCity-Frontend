@@ -16,9 +16,6 @@ import Profile from './pages/Profile';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import IncidentHistory from './pages/IncidentHistory';
-import MyReports from './pages/MyReports';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import TermsOfUse from './pages/TermsOfUse';
 import Navbar from './components/Navbar';
 import BroadcastNotification from './components/BroadcastNotification';
 import DemoDisclaimer from './components/DemoDisclaimer';
@@ -95,18 +92,11 @@ function App() {
             } />
 
             <Route path="/collaboration" element={<CollaborationHub />} />
-            <Route path="/my-reports" element={
-              <ProtectedRoute>
-                <MyReports />
-              </ProtectedRoute>
-            } />
             <Route path="/profile" element={
               <ProtectedRoute>
                 <Profile />
               </ProtectedRoute>
             } />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/terms" element={<TermsOfUse />} />
           </Routes>
           <BroadcastNotification />
         </div>

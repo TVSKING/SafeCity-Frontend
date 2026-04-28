@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import axios from 'axios';
 import io from 'socket.io-client';
 import EmergencyForm from '../components/EmergencyForm';
@@ -8,7 +7,6 @@ import PublicHazardMap from '../components/PublicHazardMap';
 import OfflineFirstAid from '../components/OfflineFirstAid';
 import AddressScanner from '../components/AddressScanner';
 import { ShieldCheck, MapPin, Zap, HeartPulse, Flame, Siren, AlertTriangle, Radio, BookOpen, ShieldAlert } from 'lucide-react';
-import { useLanguage } from '../context/LanguageContext';
 
 
 
@@ -16,7 +14,6 @@ import { useLanguage } from '../context/LanguageContext';
 const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000");
 
 const Home = () => {
-  const { lang, setLang, t } = useLanguage();
   const [activePulse, setActivePulse] = useState(null);
   const [pulseName, setPulseName] = useState('');
   const [pulseAge, setPulseAge] = useState('');
@@ -105,45 +102,17 @@ const Home = () => {
       <div className="relative pt-10 pb-20 px-4 sm:px-6 lg:pt-16 lg:pb-28 lg:px-8">
         <div className="relative max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <div className="flex justify-center gap-4 mb-8">
-               {['en', 'gu', 'hi'].map((l) => (
-                 <button 
-                   key={l}
-                   onClick={() => setLang(l)}
-                   className={`px-4 py-2 rounded-xl font-black text-xs transition-all ${lang === l ? 'bg-red-600 text-white shadow-lg' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
-                 >
-                   {l.toUpperCase()}
-                 </button>
-               ))}
-            </div>
-
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-full text-sm font-bold mb-6 animate-pulse border border-red-100">
               <Siren size={16} />
-              {t('sos_active')}
+              RAPID CRISIS RESPONSE ENGINE ACTIVE
             </div>
             <h1 className="text-5xl tracking-tight font-extrabold text-gray-900 sm:text-6xl md:text-7xl">
-              <span className="block">{t('emergency')}</span>
-              <span className="block text-red-600">{t('tap_to_report')}</span>
+              <span className="block">Safety is just one</span>
+              <span className="block text-red-600">tap away.</span>
             </h1>
-          </div>
-
-          {/* MOTO EMERGENCY BUTTONS */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-16">
-             <a href="tel:100" className="bg-blue-600 p-8 rounded-[2.5rem] shadow-2xl shadow-blue-200 flex flex-col items-center justify-center text-white hover:scale-105 transition-all group border-b-8 border-blue-800">
-                <ShieldCheck size={64} className="mb-4 group-hover:rotate-12 transition-transform" />
-                <span className="text-3xl font-black">{t('police')}</span>
-                <span className="text-sm font-bold opacity-80 mt-1">CALL 100</span>
-             </a>
-             <a href="tel:108" className="bg-red-600 p-8 rounded-[2.5rem] shadow-2xl shadow-red-200 flex flex-col items-center justify-center text-white hover:scale-105 transition-all group border-b-8 border-red-800">
-                <HeartPulse size={64} className="mb-4 group-hover:rotate-12 transition-transform" />
-                <span className="text-3xl font-black">{t('ambulance')}</span>
-                <span className="text-sm font-bold opacity-80 mt-1">CALL 108</span>
-             </a>
-             <a href="tel:101" className="bg-orange-600 p-8 rounded-[2.5rem] shadow-2xl shadow-orange-200 flex flex-col items-center justify-center text-white hover:scale-105 transition-all group border-b-8 border-orange-800">
-                <Flame size={64} className="mb-4 group-hover:rotate-12 transition-transform" />
-                <span className="text-3xl font-black">{t('fire')}</span>
-                <span className="text-sm font-bold opacity-80 mt-1">CALL 101</span>
-             </a>
+            <p className="mt-4 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-6 md:text-xl md:max-w-3xl">
+              SafeCity connects you directly to emergency departments in real-time. Fast, reliable, and active 24/7.
+            </p>
           </div>
 
           {/* Active Protocols / Directives */}
@@ -303,21 +272,6 @@ const Home = () => {
 
           <OfflineFirstAid isOpen={isFirstAidOpen} onClose={() => setIsFirstAidOpen(false)} />
           <AddressScanner isOpen={isAddressScannerOpen} onClose={() => setIsAddressScannerOpen(false)} />
-
-          {/* FOOTER */}
-          <footer className="mt-20 pt-12 pb-8 border-t border-gray-100">
-             <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em]">
-                <div className="flex items-center gap-2">
-                   <ShieldAlert className="text-red-600" size={16} />
-                   <span>SafeCity Resilience © 2026</span>
-                </div>
-                <div className="flex gap-8">
-                   <Link to="/privacy" className="hover:text-red-600 transition-colors">{t('privacy')}</Link>
-                   <Link to="/terms" className="hover:text-red-600 transition-colors">{t('terms')}</Link>
-                   <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-red-600 transition-colors uppercase">Top ↑</button>
-                </div>
-             </div>
-          </footer>
         </div>
       </div>
 

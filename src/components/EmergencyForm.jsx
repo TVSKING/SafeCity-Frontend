@@ -3,13 +3,9 @@ import axios from 'axios';
 import MapSelector from './MapSelector';
 import AITriage from './AITriage';
 import { Send, Phone, User as UserIcon, MessageSquare, AlertTriangle, CheckCircle2, Bot, Image as ImageIcon, Mic, Zap, Languages, Activity, MapPin, ShieldCheck, Clock } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
 import { sanitizeInput } from '../utils/validation';
 
 const EmergencyForm = () => {
-  const { user } = useAuth();
-  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     reporterName: '',
     reporterPhone: '',
@@ -125,8 +121,7 @@ const EmergencyForm = () => {
         ...formData,
         state: detectedState || "Unknown State", // Fallback to avoid required field failure
         aiAssessment: aiClassification,
-        timestamp: new Date().toISOString(),
-        userId: user ? user._id : null
+        timestamp: new Date().toISOString()
       };
       const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
       await axios.post(`${baseUrl}/api/alerts/create`, dataToSubmit);
@@ -251,7 +246,7 @@ const EmergencyForm = () => {
 
           <div className="flex gap-4">
             <div className="flex-1 relative">
-              <input type="file" id="photo-upload" className="hidden" accept="image/*,video/*" onChange={handleFileUpload} />
+              <input type="file" id="photo-upload" className="hidden" accept="image/*" onChange={handleFileUpload} />
               <label htmlFor="photo-upload" className="w-full py-3 px-4 bg-gray-50 rounded-xl flex items-center justify-center gap-2 text-gray-600 font-bold hover:bg-gray-100 transition-all cursor-pointer text-xs border border-dashed border-gray-300">
                 {previewImage ? <img src={previewImage} className="w-5 h-5 rounded-md object-cover" /> : <ImageIcon size={18} />}
                 {aiClassification ? 'RE-UPLOAD' : 'PHOTO/IMAGE'}
