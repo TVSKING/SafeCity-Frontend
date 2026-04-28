@@ -5,7 +5,7 @@ import EmergencyForm from '../components/EmergencyForm';
 import OneTapSOS from '../components/OneTapSOS';
 import PublicHazardMap from '../components/PublicHazardMap';
 import OfflineFirstAid from '../components/OfflineFirstAid';
-import RouteScanner from '../components/RouteScanner';
+import AddressScanner from '../components/AddressScanner';
 import { ShieldCheck, MapPin, Zap, HeartPulse, Flame, Siren, AlertTriangle, Radio, BookOpen, ShieldAlert } from 'lucide-react';
 
 
@@ -21,7 +21,7 @@ const Home = () => {
   const [liveMessages, setLiveMessages] = useState([]);
   const [activeProtocols, setActiveProtocols] = useState([]);
   const [isFirstAidOpen, setIsFirstAidOpen] = useState(false);
-  const [isRouteScannerOpen, setIsRouteScannerOpen] = useState(false);
+  const [isAddressScannerOpen, setIsAddressScannerOpen] = useState(false);
   const prevResponsesRef = useRef(0);
 
   useEffect(() => {
@@ -254,24 +254,24 @@ const Home = () => {
              </div>
 
              <div 
-               onClick={() => setIsRouteScannerOpen(true)}
+               onClick={() => setIsAddressScannerOpen(true)}
                className="bg-white p-8 rounded-[3rem] shadow-xl border border-gray-100 flex items-center gap-6 group hover:border-blue-100 transition-all cursor-pointer active:scale-95"
              >
                 <div className="w-20 h-20 bg-blue-50 rounded-[2rem] flex items-center justify-center text-blue-600 group-hover:rotate-12 transition-transform shrink-0">
                    <MapPin size={40} />
                 </div>
                 <div>
-                   <h3 className="text-xl font-black text-gray-900">Route Validation</h3>
-                   <p className="text-sm text-gray-500 font-medium">Scan your destination against live hazard zones to verify safety.</p>
+                   <h3 className="text-xl font-black text-gray-900">Address Guard</h3>
+                   <p className="text-sm text-gray-500 font-medium">Scan any building, road, or pincode against live hazard zones.</p>
                    <button className="mt-4 text-xs font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
-                      Scan Path <Zap size={12} className="fill-blue-600" />
+                      Scan Area <Zap size={12} className="fill-blue-600" />
                    </button>
                 </div>
              </div>
           </div>
 
           <OfflineFirstAid isOpen={isFirstAidOpen} onClose={() => setIsFirstAidOpen(false)} />
-          <RouteScanner isOpen={isRouteScannerOpen} onClose={() => setIsRouteScannerOpen(false)} />
+          <AddressScanner isOpen={isAddressScannerOpen} onClose={() => setIsAddressScannerOpen(false)} />
         </div>
       </div>
 
