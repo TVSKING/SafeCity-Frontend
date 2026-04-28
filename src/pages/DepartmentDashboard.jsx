@@ -5,36 +5,16 @@ import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import ResourceInventory from '../components/ResourceInventory';
 import HazardMap from '../components/HazardMap';
-import CollaborationHub from '../components/CollaborationHub';
+import { ShieldCheck, Activity, MapPin, CheckCircle, Clock, AlertCircle, PlayCircle, Phone, LayoutDashboard, Map as MapIcon, Zap, Send, Archive, ShieldAlert } from 'lucide-react';
 
-const getShortestDistance = (lat1, lon1, lat2, lon2) => {
-  const R = 6371; // Radius of the earth in km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const d = R * c; 
-  return d.toFixed(1);
-};
+
+const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000");
 
 const DepartmentDashboard = () => {
   const { user } = useAuth();
   const [alerts, setAlerts] = useState([]);
-  const [resources, setResources] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [activeTab, setActiveTab] = useState('alerts');
-
-  useEffect(() => {
-    const fetchResources = async () => {
-      try {
-        const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/resources?deptType=${user.departmentType}`);
-        setResources(data.filter(r => r.type === 'Vehicle' || r.type === 'Unit'));
-      } catch (err) { console.error(err); }
-    };
-    if (user) fetchResources();
-  }, [user]);
 
   useEffect(() => {
     const fetchAlerts = async () => {
@@ -147,12 +127,6 @@ const DepartmentDashboard = () => {
           >
             <Archive size={18} /> Inventory
           </button>
-          <button 
-            onClick={() => setActiveTab('chat')}
-            className={`px-6 py-2 rounded-xl font-bold transition-all flex items-center gap-2 ${activeTab === 'chat' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'text-gray-500 hover:bg-gray-50'}`}
-          >
-            <Shield size={18} /> Collab Hub
-          </button>
         </div>
         
         <Link 
@@ -235,22 +209,6 @@ const DepartmentDashboard = () => {
                         <span className="text-sm font-bold text-gray-700">{new Date(alert.createdAt).toLocaleTimeString()}</span>
                       </div>
                     </div>
-
-                    {/* Nearest Unit Suggestion */}
-                    <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-between">
-                       <div className="flex items-center gap-3">
-                          <Zap className="text-indigo-600" size={16} />
-                          <div>
-                             <p className="text-[10px] font-black text-indigo-400 uppercase">Suggested Nearest Unit</p>
-                             <p className="text-xs font-black text-indigo-900">
-                                {resources.length > 0 
-                                  ? `${resources[0].resourceName} (${getShortestDistance(alert.location.lat, alert.location.lng, 22.3039, 70.8022)} km away)` 
-                                  : 'No units available'}
-                             </p>
-                          </div>
-                       </div>
-                       <button className="text-[10px] font-black text-indigo-600 bg-white px-3 py-1.5 rounded-lg shadow-sm border border-indigo-100">DISPATCH UNIT</button>
-                    </div>
                   </div>
                   <div className="flex flex-col gap-3 min-w-[220px]">
                     <button 
@@ -277,12 +235,6 @@ const DepartmentDashboard = () => {
           {activeTab === 'inventory' && (
             <div className="animate-in fade-in zoom-in">
                <ResourceInventory departmentType={user.departmentType} isFull={true} />
-            </div>
-          )}
-
-          {activeTab === 'chat' && (
-            <div className="animate-in fade-in zoom-in">
-               <CollaborationHub userDept={user.departmentType} />
             </div>
           )}
         </div>

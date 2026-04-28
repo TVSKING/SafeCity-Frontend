@@ -318,7 +318,7 @@ const AdminDashboard = () => {
                   <thead>
                     <tr className="bg-gray-50/50">
                       <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Reporter</th>
-                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Type & Priority</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Type</th>
                       <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
                       <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Assignment</th>
                       <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
@@ -332,18 +332,9 @@ const AdminDashboard = () => {
                           <div className="text-xs text-gray-400 font-medium">{alert.reporterPhone}</div>
                         </td>
                         <td className="px-8 py-6">
-                          <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-2">
-                              <span className={`w-2 h-2 rounded-full ${alert.type === 'SOS' ? 'bg-red-600' : 'bg-blue-600'}`}></span>
-                              <span className="text-xs font-black text-gray-700">{alert.type.toUpperCase()}</span>
-                            </div>
-                            <span className={`text-[8px] font-black px-2 py-0.5 rounded flex items-center gap-1 w-fit ${
-                              alert.priority === 'HIGH' ? 'bg-red-600 text-white animate-pulse' : 
-                              alert.priority === 'LOW' ? 'bg-gray-100 text-gray-500' : 
-                              'bg-orange-100 text-orange-600'
-                            }`}>
-                              <Zap size={8} /> {alert.priority || 'MEDIUM'}
-                            </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full ${alert.type === 'SOS' ? 'bg-red-600' : 'bg-blue-600'}`}></span>
+                            <span className="text-xs font-black text-gray-700">{alert.type.toUpperCase()}</span>
                           </div>
                         </td>
                         <td className="px-8 py-6">
@@ -366,14 +357,7 @@ const AdminDashboard = () => {
                             <option value="ambulance">MEDICAL UNITS</option>
                           </select>
                         </td>
-                        <td className="px-8 py-6 text-right flex items-center justify-end gap-2">
-                          <button 
-                            onClick={() => alert(`Timeline for ${alert._id}:\n${alert.statusHistory?.map(h => `${new Date(h.timestamp).toLocaleString()}: ${h.status}`).join('\n') || 'No history available'}`)}
-                            className="p-2 hover:bg-white rounded-xl text-blue-600 transition-all shadow-sm border border-transparent hover:border-blue-100"
-                            title="View Timeline"
-                          >
-                            <Clock size={18} />
-                          </button>
+                        <td className="px-8 py-6 text-right">
                           <button onClick={() => window.open(`https://www.google.com/maps?q=${alert.location.lat},${alert.location.lng}`)} className="p-2 hover:bg-white rounded-xl text-red-600 transition-all shadow-sm border border-transparent hover:border-red-100">
                             <MapPin size={18} />
                           </button>

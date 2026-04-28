@@ -4,17 +4,15 @@ import MapSelector from './MapSelector';
 import AITriage from './AITriage';
 import { Send, Phone, User as UserIcon, MessageSquare, AlertTriangle, CheckCircle2, Bot, Image as ImageIcon, Mic, Zap, Languages, Activity, MapPin, ShieldCheck, Clock } from 'lucide-react';
 import { sanitizeInput } from '../utils/validation';
-import { useApp } from '../context/AppContext';
 
 const EmergencyForm = () => {
-  const { isDisasterMode, language, t, offlineQueue, setOfflineQueue } = useApp();
   const [formData, setFormData] = useState({
     reporterName: '',
     reporterPhone: '',
     type: 'Fire',
     description: '',
     location: { lat: 22.3039, lng: 70.8022 },
-    media: [],
+    mediaUrls: [],
     triageLevel: 3,
     triageResponses: []
   });
@@ -26,8 +24,6 @@ const EmergencyForm = () => {
   const [aiClassification, setAiClassification] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [detectedState, setDetectedState] = useState('');
 
   // Natural Language Triage Logic
   const handleDescriptionChange = (e) => {
@@ -57,15 +53,33 @@ const EmergencyForm = () => {
     }
   };
 
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result);
+        // Simulate AI Damage Assessment
+        setTimeout(() => {
+          const assessments = ['Minor Damage', 'Structural Damage', 'Total Collapse'];
+          setAiClassification(assessments[Math.floor(Math.random() * assessments.length)]);
+        }, 1500);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const toggleRecording = () => {
     setIsRecording(!isRecording);
     if (!isRecording) {
       setTimeout(() => {
         setIsRecording(false);
-        setFormData(prev => ({ ...prev, media: [...prev.media, 'voice_note_mock_url'] }));
+        setFormData(prev => ({ ...prev, mediaUrls: [...prev.mediaUrls, 'voice_note_mock_url'] }));
       }, 3000);
     }
   };
+
+  const [detectedState, setDetectedState] = useState('');
 
   const fetchStateFromCoords = async (lat, lng) => {
     try {
@@ -79,6 +93,7 @@ const EmergencyForm = () => {
   };
 
   useEffect(() => {
+    // Try to get live location immediately on load
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -91,59 +106,34 @@ const EmergencyForm = () => {
     }
   }, []);
 
+  // Update state detection whenever location changes
   useEffect(() => {
     if (formData.location.lat && formData.location.lng) {
       fetchStateFromCoords(formData.location.lat, formData.location.lng);
     }
   }, [formData.location]);
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setPreviewImage(reader.result);
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
-    const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-    let mediaUrls = [];
-
     try {
-      // 1. Handle File Upload if exists
-      if (selectedFile) {
-        const fileData = new FormData();
-        fileData.append('file', selectedFile);
-        const { data: uploadRes } = await axios.post(`${baseUrl}/api/alerts/upload`, fileData);
-        mediaUrls = [uploadRes.url];
-      }
-
-      // 2. Submit Alert
       const dataToSubmit = {
         ...formData,
-        media: mediaUrls,
-        state: detectedState || "Unknown State",
+        state: detectedState || "Unknown State", // Fallback to avoid required field failure
+        aiAssessment: aiClassification,
         timestamp: new Date().toISOString()
       };
-
+      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
       await axios.post(`${baseUrl}/api/alerts/create`, dataToSubmit);
-      setStatus({ type: 'success', message: 'Report Submitted Successfully!' });
-    } catch (error) {
-      console.error('Submission error:', error.message);
       
-      // 3. Offline Queuing Logic
-      if (!navigator.onLine || error.message.includes('Network Error')) {
-        const queuedReport = { ...formData, id: Date.now() };
-        setOfflineQueue([...offlineQueue, queuedReport]);
-        setStatus({ type: 'success', message: 'Offline! Report saved to queue. It will sync automatically when you reconnect.' });
-      } else {
-        setStatus({ type: 'error', message: `Submission failed: ${error.message}` });
-      }
+      setStatus({ type: 'success', message: 'Report Submitted Successfully!' });
+      // Clear form...
+    } catch (error) {
+      console.error('Submission error:', error.response?.data || error.message);
+      setStatus({ 
+        type: 'error', 
+        message: `Submission failed: ${error.response?.data?.message || error.message}` 
+      });
     } finally {
       setLoading(false);
     }
@@ -190,7 +180,7 @@ const EmergencyForm = () => {
           onClick={() => setIsLowPower(!isLowPower)}
           className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-xs transition-all ${isLowPower ? 'bg-white text-black' : 'bg-gray-100 text-gray-600'}`}
         >
-          <Zap size={14} /> {isLowPower ? 'NORMAL MODE' : t('disaster_mode')}
+          <Zap size={14} /> {isLowPower ? 'NORMAL MODE' : 'LOW POWER SOS'}
         </button>
       </div>
 
@@ -329,7 +319,7 @@ const EmergencyForm = () => {
               <>
                 <div className="flex items-center gap-2">
                   <Send className="w-5 h-5" />
-                  {detectedState ? t('report_now') : 'SELECT LOCATION'}
+                  {detectedState ? 'REPORT NOW' : 'SELECT LOCATION'}
                 </div>
                 <span className="text-[10px] opacity-60 font-bold uppercase tracking-widest">
                   {detectedState ? `Priority Broadcast Level ${formData.triageLevel}` : 'Waiting for Map Selection'}
