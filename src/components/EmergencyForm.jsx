@@ -1,3 +1,9 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import MapSelector from './MapSelector';
+import AITriage from './AITriage';
+import { Send, Phone, User as UserIcon, MessageSquare, AlertTriangle, CheckCircle2, Bot, Image as ImageIcon, Mic, Zap, Languages, Activity, MapPin, ShieldCheck, Clock } from 'lucide-react';
+import { sanitizeInput } from '../utils/validation';
 import { useApp } from '../context/AppContext';
 
 const EmergencyForm = () => {
@@ -13,9 +19,83 @@ const EmergencyForm = () => {
     triageResponses: []
   });
 
-  const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
-  // ... rest of state ...
+  const [status, setStatus] = useState({ type: '', message: '' });
+  const [showTriage, setShowTriage] = useState(false);
+  const [isLowPower, setIsLowPower] = useState(false);
+  const [aiClassification, setAiClassification] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [detectedState, setDetectedState] = useState('');
+
+  // Natural Language Triage Logic
+  const handleDescriptionChange = (e) => {
+    const text = e.target.value;
+    setFormData({ ...formData, description: text });
+
+    const lowerText = text.toLowerCase();
+    let detectedType = formData.type;
+    let detectedLevel = formData.triageLevel;
+
+    if (lowerText.includes('fire') || lowerText.includes('smoke') || lowerText.includes('burning')) {
+      detectedType = 'Fire';
+      detectedLevel = 4;
+    } else if (lowerText.includes('accident') || lowerText.includes('crash') || lowerText.includes('hit')) {
+      detectedType = 'Accident';
+      detectedLevel = 4;
+    } else if (lowerText.includes('bleeding') || lowerText.includes('unconscious') || lowerText.includes('heart')) {
+      detectedType = 'Medical';
+      detectedLevel = 5;
+    } else if (lowerText.includes('theft') || lowerText.includes('robbery') || lowerText.includes('fight')) {
+      detectedType = 'Crime';
+      detectedLevel = 3;
+    }
+
+    if (detectedType !== formData.type || detectedLevel !== formData.triageLevel) {
+      setFormData(prev => ({ ...prev, type: detectedType, triageLevel: detectedLevel, description: text }));
+    }
+  };
+
+  const toggleRecording = () => {
+    setIsRecording(!isRecording);
+    if (!isRecording) {
+      setTimeout(() => {
+        setIsRecording(false);
+        setFormData(prev => ({ ...prev, media: [...prev.media, 'voice_note_mock_url'] }));
+      }, 3000);
+    }
+  };
+
+  const fetchStateFromCoords = async (lat, lng) => {
+    try {
+      const { data } = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+      if (data.address && data.address.state) {
+        setDetectedState(data.address.state);
+      }
+    } catch (err) {
+      console.error("Failed to fetch state", err);
+    }
+  };
+
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setFormData(prev => ({ ...prev, location: { lat: latitude, lng: longitude } }));
+        },
+        (err) => console.log("Location access denied or unavailable"),
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    if (formData.location.lat && formData.location.lng) {
+      fetchStateFromCoords(formData.location.lat, formData.location.lng);
+    }
+  }, [formData.location]);
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -110,7 +190,7 @@ const EmergencyForm = () => {
           onClick={() => setIsLowPower(!isLowPower)}
           className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-xs transition-all ${isLowPower ? 'bg-white text-black' : 'bg-gray-100 text-gray-600'}`}
         >
-          <Zap size={14} /> {isLowPower ? 'NORMAL MODE' : 'LOW POWER SOS'}
+          <Zap size={14} /> {isLowPower ? 'NORMAL MODE' : t('disaster_mode')}
         </button>
       </div>
 
@@ -249,7 +329,7 @@ const EmergencyForm = () => {
               <>
                 <div className="flex items-center gap-2">
                   <Send className="w-5 h-5" />
-                  {detectedState ? 'REPORT NOW' : 'SELECT LOCATION'}
+                  {detectedState ? t('report_now') : 'SELECT LOCATION'}
                 </div>
                 <span className="text-[10px] opacity-60 font-bold uppercase tracking-widest">
                   {detectedState ? `Priority Broadcast Level ${formData.triageLevel}` : 'Waiting for Map Selection'}
