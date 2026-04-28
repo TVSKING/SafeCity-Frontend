@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useDevice } from '../context/DeviceContext';
-import { ShieldAlert, LogOut, User as UserIcon, LayoutDashboard, Users, Zap, Menu, X } from 'lucide-react';
+import { ShieldAlert, LogOut, User as UserIcon, LayoutDashboard, Users, Zap, Menu, X, Clock } from 'lucide-react';
 
 
 const Navbar = () => {
@@ -49,6 +49,9 @@ const Navbar = () => {
                   <Link to="/profile" className="text-sm font-bold text-gray-500 hover:text-red-600 flex items-center gap-1">
                     <UserIcon className="w-4 h-4" /> Profile
                   </Link>
+                  <Link to="/my-reports" className="text-sm font-bold text-gray-500 hover:text-red-600 flex items-center gap-1">
+                    <Clock className="w-4 h-4" /> My Reports
+                  </Link>
                 </div>
               )}
 
@@ -70,9 +73,9 @@ const Navbar = () => {
                 ) : (
                   <Link
                     to="/login"
-                    className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 shadow-sm transition-all"
+                    className="px-5 py-2 text-sm font-black text-white bg-red-600 rounded-xl hover:bg-red-700 shadow-lg shadow-red-100 transition-all active:scale-95"
                   >
-                    Admin / Dept Login
+                    Login / Register
                   </Link>
                 )}
               </div>
@@ -120,6 +123,9 @@ const Navbar = () => {
                   )}
                   <Link onClick={() => setMobileMenuOpen(false)} to="/profile" className="p-4 bg-gray-50 rounded-2xl font-bold text-gray-900 flex items-center gap-3">
                     <UserIcon className="text-gray-600" /> My Profile
+                  </Link>
+                  <Link onClick={() => setMobileMenuOpen(false)} to="/my-reports" className="p-4 bg-gray-50 rounded-2xl font-bold text-gray-900 flex items-center gap-3">
+                    <Clock className="text-red-600" /> My Reports
                   </Link>
                   <button
                     onClick={() => { logout(); setMobileMenuOpen(false); }}
