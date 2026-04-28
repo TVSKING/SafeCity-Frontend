@@ -118,6 +118,8 @@ const LiveDispatchMap = () => {
     'Malaviya Nagar Main Road, Rajkot': { lat: 22.2800, lng: 70.7960 },
     '150 Ring Road, Rajkot': { lat: 22.2825, lng: 70.7681 },
     'Kalawad Road, Rajkot': { lat: 22.2855, lng: 70.7715 },
+    'Ahmedabad Station': { lat: 23.0225, lng: 72.5714 },
+    'Jala Station': { lat: 20.9467, lng: 72.9520 },
     'SafeCity HQ': { lat: 20.5937, lng: 78.9629 }
   };
 
@@ -137,22 +139,28 @@ const LiveDispatchMap = () => {
       let startLat = 20.5937; // Default HQ
       let startLng = 78.9629; // Default HQ
 
-      if (user && user.address) {
-         if (knownLocations[user.address]) {
-            startLat = knownLocations[user.address].lat;
-            startLng = knownLocations[user.address].lng;
-         } else {
-            try {
-               const { data: geoData } = await axios.get(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(user.address)}&format=json&limit=1`, {
-                 headers: { 'Accept-Language': 'en-US,en;q=0.9' }
-               });
-               if (geoData && geoData.length > 0) {
-                  startLat = parseFloat(geoData[0].lat);
-                  startLng = parseFloat(geoData[0].lon);
-               }
-            } catch (geoErr) {
-               console.warn('Geocoding failed, falling back to HQ', geoErr);
+      // SMART STATION DETECTION
+      const userRef = (user.address || user.name || '').toLowerCase();
+      if (userRef.includes('ahmedabad') || userRef.includes('ahme')) {
+         startLat = knownLocations['Ahmedabad Station'].lat;
+         startLng = knownLocations['Ahmedabad Station'].lng;
+      } else if (userRef.includes('jala')) {
+         startLat = knownLocations['Jala Station'].lat;
+         startLng = knownLocations['Jala Station'].lng;
+      } else if (user && user.address && knownLocations[user.address]) {
+         startLat = knownLocations[user.address].lat;
+         startLng = knownLocations[user.address].lng;
+      } else if (user && user.address) {
+         try {
+            const { data: geoData } = await axios.get(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(user.address)}&format=json&limit=1`, {
+              headers: { 'Accept-Language': 'en-US,en;q=0.9' }
+            });
+            if (geoData && geoData.length > 0) {
+               startLat = parseFloat(geoData[0].lat);
+               startLng = parseFloat(geoData[0].lon);
             }
+         } catch (geoErr) {
+            console.warn('Geocoding failed, falling back to HQ', geoErr);
          }
       }
 
