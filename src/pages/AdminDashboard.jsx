@@ -4,7 +4,7 @@ import io from 'socket.io-client';
 import HazardMap from '../components/HazardMap';
 import {
   BarChart3, AlertCircle, CheckCircle, Clock, MapPin,
-  ExternalLink, ArrowRightLeft, Search, Filter, ShieldAlert, Radio, Activity, LayoutDashboard, Map as MapIcon, Users, Zap, Package, Check, X, Send, History
+  ExternalLink, ArrowRightLeft, Search, Filter, ShieldAlert, Radio, Activity, LayoutDashboard, Map as MapIcon, Users, Zap, Package, Check, X, Send, History, Image as ImageIcon
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
