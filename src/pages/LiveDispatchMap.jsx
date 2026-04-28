@@ -43,10 +43,13 @@ const LiveDispatchMap = () => {
     const fetchHazards = async () => {
       try {
         const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin-tools/hazards`);
-        // FUZZY STATE FILTER: Ignore casing
+        // FUZZY STATE FILTER: Ignore casing, but show if state is missing
         if (user && user.state) {
           const uState = user.state.trim().toLowerCase();
-          setHazards(data.filter(h => (h.state || '').trim().toLowerCase() === uState));
+          setHazards(data.filter(h => {
+             const hState = (h.state || '').trim().toLowerCase();
+             return !hState || hState === uState;
+          }));
         } else {
           setHazards(data);
         }

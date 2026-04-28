@@ -7,10 +7,13 @@ const OneTapSOS = () => {
   const [status, setStatus] = useState(null);
 
   const handleSOS = async () => {
+    setLoading(true);
+    setStatus('requesting_location');
+
     const sendSOS = async (lat = 20.5937, lng = 78.9629, state = 'Gujarat') => {
       try {
         setStatus('sending_alert');
-        await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/create`, {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/create`, {
           reporterName: 'SOS User',
           reporterPhone: 'Unknown',
           type: 'SOS',
@@ -19,10 +22,12 @@ const OneTapSOS = () => {
           state: state,
           triageLevel: 5
         });
+        console.log('✅ SOS Response:', response.data);
         setStatus('success');
         setTimeout(() => setStatus(null), 5000);
       } catch (error) {
-        setStatus('error');
+        console.error('❌ SOS Error:', error);
+        setStatus(`error_${error.response?.status || 'network'}`);
       } finally {
         setLoading(false);
       }
@@ -82,11 +87,16 @@ const OneTapSOS = () => {
             <AlertCircle size={14} /> SOS SENT SUCCESSFULLY
           </p>
         )}
-        {status === 'error' && (
-          <p className="text-red-600 text-sm font-bold">Failed to send SOS. Try again.</p>
+        {status?.startsWith('error') && (
+          <p className="text-red-600 text-sm font-bold">
+            {status === 'error_404' ? 'API Endpoint not found.' :
+             status === 'error_500' ? 'Server Error. Please contact admin.' :
+             status === 'error_403' ? 'Access Denied.' :
+             'Network failure. Check internet.'}
+          </p>
         )}
         {status === 'geo_error' && (
-          <p className="text-red-600 text-sm font-bold">Location access denied.</p>
+          <p className="text-red-600 text-sm font-bold">Location access denied / timeout.</p>
         )}
       </div>
     </div>

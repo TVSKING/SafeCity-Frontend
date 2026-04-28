@@ -58,16 +58,26 @@ const HazardMap = ({ stateFilter = null, showIncidents = false, onUpdateStatus =
   const fetchAlerts = async () => {
     try {
       const token = localStorage.getItem('token');
-      const url = stateFilter 
-        ? `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/department?deptType=all`
-        : `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/admin`;
+      // If we are in a department view, we use the department endpoint, otherwise admin/public
+      const url = `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/admin`;
         
       const { data } = await axios.get(url, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
       
       const received = data.alerts || (Array.isArray(data) ? data : []);
-      setAlerts(received.filter(a => a.status !== 'Resolved'));
+      
+      // Filter by state if requested
+      let filtered = received;
+      if (stateFilter) {
+        const targetState = stateFilter.trim().toLowerCase();
+        filtered = received.filter(a => {
+          const aState = (a.state || '').trim().toLowerCase();
+          return !aState || aState === targetState; // Show if missing state OR matching state
+        });
+      }
+
+      setAlerts(filtered.filter(a => a.status !== 'Resolved'));
     } catch (err) { console.error(err); }
   };
 
@@ -81,7 +91,7 @@ const HazardMap = ({ stateFilter = null, showIncidents = false, onUpdateStatus =
         if (stateFilter) {
           const alertState = (newAlert.state || '').trim().toLowerCase();
           const targetState = (stateFilter || '').trim().toLowerCase();
-          if (alertState !== targetState) return;
+          if (alertState && alertState !== targetState) return;
         }
         setAlerts(prev => [newAlert, ...prev.filter(a => a._id !== newAlert._id)]);
       });
@@ -147,7 +157,8 @@ const HazardMap = ({ stateFilter = null, showIncidents = false, onUpdateStatus =
     try {
       const { data } = await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin-tools/hazards/create`, {
         ...formData,
-        location: { lat: newHazard.lat, lng: newHazard.lng }
+        location: { lat: newHazard.lat, lng: newHazard.lng },
+        state: stateFilter || 'Gujarat' // Pass the current state context
       });
       setHazards([...hazards, data]);
       setShowForm(false);

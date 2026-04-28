@@ -308,9 +308,9 @@ const EmergencyForm = () => {
 
           <button
             type="submit"
-            disabled={loading || !detectedState}
+            disabled={loading}
             className={`w-full py-4 rounded-[1.5rem] font-black text-lg shadow-2xl transition-all active:scale-95 flex flex-col items-center justify-center gap-0 ${
-              loading || !detectedState ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 shadow-red-200'
+              loading ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 shadow-red-200'
             }`}
           >
             {loading ? (
@@ -319,10 +319,10 @@ const EmergencyForm = () => {
               <>
                 <div className="flex items-center gap-2">
                   <Send className="w-5 h-5" />
-                  {detectedState ? 'REPORT NOW' : 'SELECT LOCATION'}
+                  REPORT NOW
                 </div>
                 <span className="text-[10px] opacity-60 font-bold uppercase tracking-widest">
-                  {detectedState ? `Priority Broadcast Level ${formData.triageLevel}` : 'Waiting for Map Selection'}
+                  {detectedState ? `Priority Broadcast Level ${formData.triageLevel}` : 'Automatic Regional Dispatch Active'}
                 </span>
               </>
             )}
