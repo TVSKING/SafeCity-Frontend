@@ -9,6 +9,11 @@ import {
 import { Link } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { sanitizeInput } from '../utils/validation';
+import { findClosestUnit, calculateDistance } from '../utils/dispatchOptimizer';
+import { generateIncidentReport } from '../utils/pdfGenerator';
+import AnalyticsView from '../components/AnalyticsView';
+import MediaWall from '../components/MediaWall';
+import { FileText } from 'lucide-react';
 
 
 
@@ -26,6 +31,7 @@ const AdminDashboard = () => {
   const [safetyChecks, setSafetyChecks] = useState([]);
   const [pendingItems, setPendingItems] = useState([]);
   const [activeBroadcasts, setActiveBroadcasts] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [pulseTitle, setPulseTitle] = useState('');
   const [pulseArea, setPulseArea] = useState('');
 
@@ -35,6 +41,7 @@ const AdminDashboard = () => {
     fetchSafetyChecks();
     fetchPendingItems();
     fetchActiveBroadcasts();
+    fetchDepartments();
     socket.on('newAlert', (newAlert) => setAlerts(prev => [newAlert, ...prev]));
     socket.on('alertUpdated', (updatedAlert) => setAlerts(prev => prev.map(a => a._id === updatedAlert._id ? updatedAlert : a)));
     socket.on('newSafetyCheck', (newCheck) => setSafetyChecks(prev => [newCheck, ...prev]));
@@ -109,6 +116,15 @@ const AdminDashboard = () => {
       setPulseTitle('');
       setPulseArea('');
       alert('Safety Pulse Initiated!');
+    } catch (err) { console.error(err); }
+  };
+
+  const fetchDepartments = async () => {
+    try {
+      const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/auth/users?role=department`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setDepartments(data);
     } catch (err) { console.error(err); }
   };
 
@@ -257,7 +273,8 @@ const AdminDashboard = () => {
           { id: 'safety', label: 'Safety Pulse', icon: Radio },
           { id: 'volunteers', label: 'Volunteers', icon: Users },
           { id: 'approvals', label: 'Approvals', icon: Package },
-          { id: 'analytics', label: 'Analytics', icon: BarChart3 }
+          { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+          { id: 'media', label: 'Media Intel', icon: ImageIcon }
         ].map(tab => (
           <button
             key={tab.id}
@@ -319,23 +336,45 @@ const AdminDashboard = () => {
                     <tr className="bg-gray-50/50">
                       <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Reporter</th>
                       <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Type</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Priority (AI)</th>
                       <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Smart Suggestion</th>
                       <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Assignment</th>
                       <th className="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {filteredAlerts.map((alert) => (
-                      <tr key={alert._id} className={`hover:bg-gray-50/80 transition-colors ${alert.type === 'SOS' ? 'bg-red-50/30' : ''}`}>
+                      <tr key={alert._id} className={`hover:bg-gray-50/80 transition-colors ${alert.type === 'SOS' || alert.priority === 'HIGH' ? 'bg-red-50/30' : ''}`}>
                         <td className="px-8 py-6">
-                          <div className="font-bold text-gray-900">{alert.reporterName}</div>
-                          <div className="text-xs text-gray-400 font-medium">{alert.reporterPhone}</div>
+                          <div className="flex items-center gap-3">
+                             <div>
+                                <div className="font-bold text-gray-900 flex items-center gap-2">
+                                   {alert.reporterName}
+                                   {alert.isSpam && (
+                                      <span className="bg-orange-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded flex items-center gap-1 animate-pulse">
+                                         <AlertCircle size={10} /> SPAM?
+                                      </span>
+                                   )}
+                                </div>
+                                <div className="text-xs text-gray-400 font-medium">{alert.reporterPhone}</div>
+                             </div>
+                          </div>
                         </td>
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-2">
                             <span className={`w-2 h-2 rounded-full ${alert.type === 'SOS' ? 'bg-red-600' : 'bg-blue-600'}`}></span>
                             <span className="text-xs font-black text-gray-700">{alert.type.toUpperCase()}</span>
                           </div>
+                        </td>
+                        <td className="px-8 py-6">
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest ${
+                            alert.priority === 'HIGH' ? 'bg-red-600 text-white shadow-lg shadow-red-200' :
+                            alert.priority === 'LOW' ? 'bg-gray-100 text-gray-400' :
+                            'bg-orange-100 text-orange-600'
+                          }`}>
+                            {alert.priority || 'MEDIUM'}
+                          </span>
                         </td>
                         <td className="px-8 py-6">
                           <span className={`px-3 py-1 rounded-full text-[10px] font-black ${alert.status === 'Pending' ? 'bg-red-100 text-red-600' :
@@ -346,7 +385,24 @@ const AdminDashboard = () => {
                           </span>
                         </td>
                         <td className="px-8 py-6">
-                          <select
+                           {(() => {
+                              const nearest = findClosestUnit(alert, departments);
+                              return nearest ? (
+                                 <div className="flex flex-col">
+                                    <span className="text-[10px] font-black text-purple-600 uppercase tracking-tight flex items-center gap-1">
+                                       <Zap size={10} className="fill-purple-600" /> RECOMMENDED
+                                    </span>
+                                    <div className="text-[10px] font-black text-gray-900 mt-1 uppercase">
+                                       {nearest.name} ({nearest.distance}km)
+                                    </div>
+                                 </div>
+                              ) : (
+                                 <span className="text-[10px] font-black text-gray-400 uppercase">Analysing...</span>
+                              );
+                           })()}
+                        </td>
+                        <td className="px-8 py-6">
+                           <select
                             className="bg-gray-100 border-none rounded-lg px-3 py-1.5 text-[10px] font-black outline-none focus:ring-2 focus:ring-red-600 transition-all"
                             value={alert.assignedDepartment}
                             onChange={(e) => handleReassign(alert._id, e.target.value)}
@@ -357,8 +413,15 @@ const AdminDashboard = () => {
                             <option value="ambulance">MEDICAL UNITS</option>
                           </select>
                         </td>
-                        <td className="px-8 py-6 text-right">
-                          <button onClick={() => window.open(`https://www.google.com/maps?q=${alert.location.lat},${alert.location.lng}`)} className="p-2 hover:bg-white rounded-xl text-red-600 transition-all shadow-sm border border-transparent hover:border-red-100">
+                        <td className="px-8 py-6 text-right flex items-center justify-end gap-2">
+                          <button 
+                            onClick={() => generateIncidentReport(alert)} 
+                            className="p-2 hover:bg-white rounded-xl text-blue-600 transition-all shadow-sm border border-transparent hover:border-blue-100"
+                            title="Download Official PDF Report"
+                          >
+                            <FileText size={18} />
+                          </button>
+                          <button onClick={() => window.open(`https://www.google.com/maps?q=${alert.location.lat},${alert.location.lng}`)} className="p-2 hover:bg-white rounded-xl text-red-600 transition-all shadow-sm border border-transparent hover:border-red-100" title="View on Map">
                             <MapPin size={18} />
                           </button>
                         </td>
@@ -607,96 +670,12 @@ const AdminDashboard = () => {
         </div>
       )}
 
+      {activeTab === 'media' && (
+        <MediaWall alerts={alerts} />
+      )}
+
       {activeTab === 'analytics' && (
-        <div className="space-y-8 animate-in fade-in zoom-in">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Incident Type Distribution */}
-            <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-gray-100">
-              <h3 className="text-xl font-black text-gray-900 mb-8 flex items-center gap-2">
-                <BarChart3 className="text-red-600" /> Incident Frequency
-              </h3>
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={Object.entries(
-                    alerts.reduce((acc, curr) => {
-                      acc[curr.type] = (acc[curr.type] || 0) + 1;
-                      return acc;
-                    }, {})
-                  ).map(([name, value]) => ({ name, value }))}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold' }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold' }} />
-                    <Tooltip
-                      contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                      cursor={{ fill: '#f8fafc' }}
-                    />
-                    <Bar dataKey="value" fill="#ef4444" radius={[10, 10, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Status Distribution */}
-            <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-gray-100">
-              <h3 className="text-xl font-black text-gray-900 mb-8 flex items-center gap-2">
-                <CheckCircle className="text-green-600" /> Resolution Status
-              </h3>
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={[
-                        { name: 'Pending', value: stats.pending, color: '#ef4444' },
-                        { name: 'Active', value: stats.active - stats.pending, color: '#f97316' },
-                        { name: 'Resolved', value: stats.resolved, color: '#22c55e' }
-                      ]}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {[0, 1, 2].map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={['#ef4444', '#f97316', '#22c55e'][index]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-
-          {/* Trend Analytics */}
-          <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-gray-100">
-            <h3 className="text-xl font-black text-gray-900 mb-8 flex items-center gap-2">
-              <Activity className="text-blue-600" /> Crisis Intensity Timeline
-            </h3>
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={[
-                  { name: '08:00', alerts: 2 },
-                  { name: '10:00', alerts: 5 },
-                  { name: '12:00', alerts: 8 },
-                  { name: '14:00', alerts: alerts.length },
-                  { name: '16:00', alerts: alerts.length + 2 },
-                  { name: '18:00', alerts: alerts.length - 1 }
-                ]}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold' }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold' }} />
-                  <Tooltip
-                    contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                  />
-                  <Line type="monotone" dataKey="alerts" stroke="#3b82f6" strokeWidth={4} dot={{ r: 6, fill: '#3b82f6' }} activeDot={{ r: 8 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
+        <AnalyticsView alerts={alerts} stats={stats} />
       )}
 
 
