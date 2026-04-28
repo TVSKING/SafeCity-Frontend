@@ -136,17 +136,19 @@ const LiveDispatchMap = () => {
       });
       setResources(resources.map(r => r._id === resource._id ? { ...r, quantity: r.quantity - deployQty } : r));
 
-      let startLat = 20.5937; // Default HQ
-      let startLng = 78.9629; // Default HQ
+      let startLat = 23.0225; // Default Base: Ahmedabad
+      let startLng = 72.5714; // Default Base: Ahmedabad
 
-      // SMART STATION DETECTION
-      const userRef = (user.address || user.name || '').toLowerCase();
-      if (userRef.includes('ahmedabad') || userRef.includes('ahme')) {
+      // AGGRESSIVE STATION DETECTION
+      const userRef = (user.address || user.name || user.email || '').toLowerCase();
+      if (userRef.includes('ahmedabad') || userRef.includes('ahme') || userRef.includes('ahm')) {
          startLat = knownLocations['Ahmedabad Station'].lat;
          startLng = knownLocations['Ahmedabad Station'].lng;
+         console.log('📍 Station Match: Ahmedabad');
       } else if (userRef.includes('jala')) {
          startLat = knownLocations['Jala Station'].lat;
          startLng = knownLocations['Jala Station'].lng;
+         console.log('📍 Station Match: Jala');
       } else if (user && user.address && knownLocations[user.address]) {
          startLat = knownLocations[user.address].lat;
          startLng = knownLocations[user.address].lng;
