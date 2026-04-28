@@ -6,7 +6,8 @@ import OneTapSOS from '../components/OneTapSOS';
 import PublicHazardMap from '../components/PublicHazardMap';
 import OfflineFirstAid from '../components/OfflineFirstAid';
 import AddressScanner from '../components/AddressScanner';
-import { ShieldCheck, MapPin, Zap, HeartPulse, Flame, Siren, AlertTriangle, Radio, BookOpen, ShieldAlert } from 'lucide-react';
+import { useApp } from '../context/AppContext';
+import { ShieldCheck, MapPin, Zap, HeartPulse, Flame, Siren, AlertTriangle, Radio, BookOpen, ShieldAlert, Globe, WifiOff } from 'lucide-react';
 
 
 
@@ -14,6 +15,7 @@ import { ShieldCheck, MapPin, Zap, HeartPulse, Flame, Siren, AlertTriangle, Radi
 const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000");
 
 const Home = () => {
+  const { isDisasterMode, setIsDisasterMode, language, setLanguage, t } = useApp();
   const [activePulse, setActivePulse] = useState(null);
   const [pulseName, setPulseName] = useState('');
   const [pulseAge, setPulseAge] = useState('');
@@ -98,7 +100,33 @@ const Home = () => {
   };
 
   return (
-    <div className="bg-white min-h-[calc(100vh-64px)] overflow-hidden">
+    <div className={`min-h-[calc(100vh-64px)] overflow-hidden transition-all duration-500 ${isDisasterMode ? 'bg-white' : 'bg-white'}`}>
+      
+      {/* Global Controls */}
+      <div className="sticky top-0 z-[100] bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 py-2 flex justify-between items-center max-w-7xl mx-auto rounded-full mt-4 shadow-sm">
+         <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-xl">
+               {['en', 'hi', 'gu'].map(lang => (
+                 <button 
+                  key={lang}
+                  onClick={() => setLanguage(lang)}
+                  className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase transition-all ${language === lang ? 'bg-gray-900 text-white' : 'text-gray-400 hover:text-gray-900'}`}
+                 >
+                   {lang}
+                 </button>
+               ))}
+            </div>
+         </div>
+
+         <button 
+          onClick={() => setIsDisasterMode(!isDisasterMode)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${isDisasterMode ? 'bg-red-600 text-white shadow-lg shadow-red-200' : 'bg-gray-100 text-gray-400 hover:text-gray-900'}`}
+         >
+           {isDisasterMode ? <WifiOff size={14} /> : <Radio size={14} />}
+           {t('disaster_mode')}
+         </button>
+      </div>
+
       <div className="relative pt-10 pb-20 px-4 sm:px-6 lg:pt-16 lg:pb-28 lg:px-8">
         <div className="relative max-w-7xl mx-auto">
           <div className="text-center mb-12">

@@ -1,139 +1,69 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import MapSelector from './MapSelector';
-import AITriage from './AITriage';
-import { Send, Phone, User as UserIcon, MessageSquare, AlertTriangle, CheckCircle2, Bot, Image as ImageIcon, Mic, Zap, Languages, Activity, MapPin, ShieldCheck, Clock } from 'lucide-react';
-import { sanitizeInput } from '../utils/validation';
+import { useApp } from '../context/AppContext';
 
 const EmergencyForm = () => {
+  const { isDisasterMode, language, t, offlineQueue, setOfflineQueue } = useApp();
   const [formData, setFormData] = useState({
     reporterName: '',
     reporterPhone: '',
     type: 'Fire',
     description: '',
     location: { lat: 22.3039, lng: 70.8022 },
-    mediaUrls: [],
+    media: [],
     triageLevel: 3,
     triageResponses: []
   });
 
+  const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState({ type: '', message: '' });
-  const [showTriage, setShowTriage] = useState(false);
-  const [isLowPower, setIsLowPower] = useState(false);
-  const [aiClassification, setAiClassification] = useState(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [previewImage, setPreviewImage] = useState(null);
-
-  // Natural Language Triage Logic
-  const handleDescriptionChange = (e) => {
-    const text = e.target.value;
-    setFormData({ ...formData, description: text });
-
-    const lowerText = text.toLowerCase();
-    let detectedType = formData.type;
-    let detectedLevel = formData.triageLevel;
-
-    if (lowerText.includes('fire') || lowerText.includes('smoke') || lowerText.includes('burning')) {
-      detectedType = 'Fire';
-      detectedLevel = 4;
-    } else if (lowerText.includes('accident') || lowerText.includes('crash') || lowerText.includes('hit')) {
-      detectedType = 'Accident';
-      detectedLevel = 4;
-    } else if (lowerText.includes('bleeding') || lowerText.includes('unconscious') || lowerText.includes('heart')) {
-      detectedType = 'Medical';
-      detectedLevel = 5;
-    } else if (lowerText.includes('theft') || lowerText.includes('robbery') || lowerText.includes('fight')) {
-      detectedType = 'Crime';
-      detectedLevel = 3;
-    }
-
-    if (detectedType !== formData.type || detectedLevel !== formData.triageLevel) {
-      setFormData(prev => ({ ...prev, type: detectedType, triageLevel: detectedLevel, description: text }));
-    }
-  };
+  // ... rest of state ...
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setSelectedFile(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewImage(reader.result);
-        // Simulate AI Damage Assessment
-        setTimeout(() => {
-          const assessments = ['Minor Damage', 'Structural Damage', 'Total Collapse'];
-          setAiClassification(assessments[Math.floor(Math.random() * assessments.length)]);
-        }, 1500);
-      };
+      reader.onloadend = () => setPreviewImage(reader.result);
       reader.readAsDataURL(file);
     }
   };
 
-  const toggleRecording = () => {
-    setIsRecording(!isRecording);
-    if (!isRecording) {
-      setTimeout(() => {
-        setIsRecording(false);
-        setFormData(prev => ({ ...prev, mediaUrls: [...prev.mediaUrls, 'voice_note_mock_url'] }));
-      }, 3000);
-    }
-  };
-
-  const [detectedState, setDetectedState] = useState('');
-
-  const fetchStateFromCoords = async (lat, lng) => {
-    try {
-      const { data } = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-      if (data.address && data.address.state) {
-        setDetectedState(data.address.state);
-      }
-    } catch (err) {
-      console.error("Failed to fetch state", err);
-    }
-  };
-
-  useEffect(() => {
-    // Try to get live location immediately on load
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setFormData(prev => ({ ...prev, location: { lat: latitude, lng: longitude } }));
-        },
-        (err) => console.log("Location access denied or unavailable"),
-        { enableHighAccuracy: true, timeout: 5000 }
-      );
-    }
-  }, []);
-
-  // Update state detection whenever location changes
-  useEffect(() => {
-    if (formData.location.lat && formData.location.lng) {
-      fetchStateFromCoords(formData.location.lat, formData.location.lng);
-    }
-  }, [formData.location]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    
+    const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    let mediaUrls = [];
+
     try {
+      // 1. Handle File Upload if exists
+      if (selectedFile) {
+        const fileData = new FormData();
+        fileData.append('file', selectedFile);
+        const { data: uploadRes } = await axios.post(`${baseUrl}/api/alerts/upload`, fileData);
+        mediaUrls = [uploadRes.url];
+      }
+
+      // 2. Submit Alert
       const dataToSubmit = {
         ...formData,
-        state: detectedState || "Unknown State", // Fallback to avoid required field failure
-        aiAssessment: aiClassification,
+        media: mediaUrls,
+        state: detectedState || "Unknown State",
         timestamp: new Date().toISOString()
       };
-      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
       await axios.post(`${baseUrl}/api/alerts/create`, dataToSubmit);
-      
       setStatus({ type: 'success', message: 'Report Submitted Successfully!' });
-      // Clear form...
     } catch (error) {
-      console.error('Submission error:', error.response?.data || error.message);
-      setStatus({ 
-        type: 'error', 
-        message: `Submission failed: ${error.response?.data?.message || error.message}` 
-      });
+      console.error('Submission error:', error.message);
+      
+      // 3. Offline Queuing Logic
+      if (!navigator.onLine || error.message.includes('Network Error')) {
+        const queuedReport = { ...formData, id: Date.now() };
+        setOfflineQueue([...offlineQueue, queuedReport]);
+        setStatus({ type: 'success', message: 'Offline! Report saved to queue. It will sync automatically when you reconnect.' });
+      } else {
+        setStatus({ type: 'error', message: `Submission failed: ${error.message}` });
+      }
     } finally {
       setLoading(false);
     }
