@@ -121,7 +121,8 @@ const LiveDispatchMap = () => {
     if (deployQty > resource.quantity) return alert('Not enough units available');
 
     // 🗺️ STRATEGIC ROUTE VALIDATION
-    let startLat = 20.5937, startLng = 78.9629; // Fallback India Center
+    try {
+      let startLat = 20.5937, startLng = 78.9629; // Fallback India Center
     
     // Determine start point (Station/HQ)
     if (user && user.address && knownLocations[user.address]) {

@@ -166,8 +166,15 @@ const DepartmentDashboard = () => {
         <div className="lg:col-span-3">
           {activeTab === 'alerts' && (
             <div className="space-y-6">
-              {alerts.filter(a => a.status !== 'Resolved').length === 0 && (
-                <div key={alert._id} className={`bg-white p-8 rounded-[2.5rem] shadow-xl border-l-8 transition-all ${alert.type === 'SOS' ? 'border-l-red-600 animate-pulse-subtle' : 'border-l-blue-500'} flex flex-col md:flex-row gap-8`}>
+              {alerts.filter(a => a.status !== 'Resolved').length === 0 ? (
+                <div className="bg-white p-12 rounded-[3rem] border-2 border-dashed border-gray-100 flex flex-col items-center justify-center text-center">
+                   <ShieldCheck size={64} className="text-green-600/20 mb-4" />
+                   <h3 className="text-xl font-black text-gray-900 uppercase tracking-widest">Mission Control Secure</h3>
+                   <p className="text-gray-400 font-bold text-xs uppercase mt-2">No active emergencies detected in your sector.</p>
+                </div>
+              ) : (
+                alerts.filter(a => a.status !== 'Resolved').map((alert) => (
+                  <div key={alert._id} className={`bg-white p-8 rounded-[2.5rem] shadow-xl border-l-8 transition-all ${alert.type === 'SOS' ? 'border-l-red-600 animate-pulse-subtle' : 'border-l-blue-500'} flex flex-col md:flex-row gap-8`}>
                   <div className="flex-1 space-y-4">
                     <div className="flex items-center justify-between">
                        <LiveResponseTimer createdAt={alert.createdAt} resolvedAt={alert.resolvedAt} status={alert.status} />
@@ -304,8 +311,8 @@ const DepartmentDashboard = () => {
                        <TimelinePlayback timeline={alert.timeline} />
                     </div>
                   )}
-                </div>
-              ))}
+                ))
+              )}
             </div>
           )}
 
