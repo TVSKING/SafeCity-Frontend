@@ -3,8 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import axios from 'axios';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { AlertTriangle, ShieldCheck } from 'lucide-react';
-import { maskText, encryptionNotice } from '../utils/privacyMask';
+import { AlertTriangle } from 'lucide-react';
 
 // Fix for default marker icons in Leaflet
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -74,17 +73,9 @@ const PublicHazardMap = () => {
         ))}
       </MapContainer>
       
-      
       <div className="absolute top-4 left-4 z-[1000] bg-white/90 backdrop-blur px-4 py-2 rounded-2xl shadow-xl border border-white flex items-center gap-2">
         <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
         <span className="text-xs font-black text-gray-900 uppercase tracking-widest">Live Hazard Tracking</span>
-      </div>
-
-      <div className="absolute bottom-4 right-4 z-[1000] bg-gray-900/80 backdrop-blur px-4 py-2 rounded-xl shadow-xl border border-white/10 flex items-center gap-2">
-        <ShieldCheck className="text-blue-400" size={14} />
-        <span className="text-[10px] font-bold text-white uppercase tracking-tight">
-          {encryptionNotice}
-        </span>
       </div>
 
     </div>

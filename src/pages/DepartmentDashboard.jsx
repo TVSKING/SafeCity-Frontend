@@ -6,8 +6,6 @@ import { Link } from 'react-router-dom';
 import ResourceInventory from '../components/ResourceInventory';
 import HazardMap from '../components/HazardMap';
 import { ShieldCheck, Activity, MapPin, CheckCircle, Clock, AlertCircle, PlayCircle, Phone, LayoutDashboard, Map as MapIcon, Zap, Send, Archive, ShieldAlert } from 'lucide-react';
-import TimelinePlayback from '../components/TimelinePlayback';
-import LiveResponseTimer from '../components/LiveResponseTimer';
 
 
 const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000");
@@ -17,7 +15,6 @@ const DepartmentDashboard = () => {
   const [alerts, setAlerts] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [activeTab, setActiveTab] = useState('alerts');
-  const [viewingTimeline, setViewingTimeline] = useState(null);
 
   useEffect(() => {
     const fetchAlerts = async () => {
@@ -25,17 +22,14 @@ const DepartmentDashboard = () => {
       try { 
         const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
         const token = localStorage.getItem('token');
-        window.__SYSTEM_LOADING__ = true;
-        const { data } = await axios.get(`${baseUrl}/api/alerts/department?deptType=${user.departmentType}&_t=${Date.now()}`, {
-          headers: { Authorization: `Bearer ${token}` },
-          timeout: 10000
+        const { data } = await axios.get(`${baseUrl}/api/alerts/department?deptType=${user.departmentType}`, {
+          headers: { Authorization: `Bearer ${token}` }
         }); 
-        window.__SYSTEM_LOADING__ = false;
         
-        console.log('📡 RAW SERVER RESPONSE:', data);
-        
-        const receivedAlerts = data.alerts || (Array.isArray(data) ? data : []);
-        setAlerts(receivedAlerts); 
+        const rawAlerts = data.alerts || (Array.isArray(data) ? data : []);
+        // Apply local filtering to ensure absolute relevance
+        const filtered = rawAlerts.filter(a => checkRelevance(a));
+        setAlerts(filtered); 
       }
       catch (err) { 
         setAlerts([]); 
@@ -44,7 +38,7 @@ const DepartmentDashboard = () => {
     fetchAlerts();
     socket.on('newAlert', (newAlert) => {
       if (checkRelevance(newAlert)) {
-        setAlerts(prev => [newAlert, ...prev]);
+        setAlerts(prev => [newAlert, ...prev.filter(a => a._id !== newAlert._id)]);
         setNotifications(prev => [...prev, `NEW: ${newAlert.type} report!`]);
         setTimeout(() => setNotifications(prev => prev.slice(1)), 5000);
       }
@@ -56,20 +50,22 @@ const DepartmentDashboard = () => {
   const checkRelevance = (alert) => {
     if (!user || !alert) return false;
     
-    // FUZZY STATE CHECK: Ignore casing and whitespace
-    const alertState = alert.state ? alert.state.trim().toLowerCase() : '';
-    const userState = user.state ? user.state.trim().toLowerCase() : '';
+    const alertState = (alert.state || '').trim().toLowerCase();
+    const userState = (user.state || '').trim().toLowerCase();
     
-    if (alertState !== userState) {
-      console.log(`🚫 Alert hidden: State mismatch ("${alertState}" vs "${userState}")`);
+    // If state is missing, assume it's a global/critical SOS that needs attention
+    if (alertState && userState && alertState !== userState) {
       return false;
     }
 
-    const dept = user.departmentType;
-    if (dept === 'police') return alert.assignedDepartment === 'police' || alert.type === 'Crime' || alert.type === 'Accident' || alert.type === 'SOS';
-    if (dept === 'fire') return alert.assignedDepartment === 'fire' || alert.type === 'Fire' || alert.type === 'SOS';
-    if (dept === 'ambulance' || dept === 'medical') return alert.assignedDepartment === 'ambulance' || alert.assignedDepartment === 'medical' || alert.type === 'Medical' || alert.type === 'Accident' || alert.type === 'SOS';
-    return alert.assignedDepartment === dept || alert.assignedDepartment === 'none';
+    const dept = (user.departmentType || '').toLowerCase();
+    const aDept = (alert.assignedDepartment || '').toLowerCase();
+    const aType = (alert.type || '').toLowerCase();
+
+    if (dept === 'police') return aDept === 'police' || aType === 'crime' || aType === 'accident' || aType === 'sos';
+    if (dept === 'fire') return aDept === 'fire' || aType === 'fire' || aType === 'sos';
+    if (dept === 'ambulance' || dept === 'medical') return aDept === 'ambulance' || aDept === 'medical' || aType === 'medical' || aType === 'accident' || aType === 'sos';
+    return aDept === dept || aDept === 'none' || aType === 'sos';
   };
 
   const updateStatus = async (id, status) => {
@@ -166,23 +162,15 @@ const DepartmentDashboard = () => {
         <div className="lg:col-span-3">
           {activeTab === 'alerts' && (
             <div className="space-y-6">
-              {alerts.filter(a => a.status !== 'Resolved').length === 0 ? (
-                <div className="bg-white p-12 rounded-[3rem] border-2 border-dashed border-gray-100 flex flex-col items-center justify-center text-center">
-                   <ShieldCheck size={64} className="text-green-600/20 mb-4" />
-                   <h3 className="text-xl font-black text-gray-900 uppercase tracking-widest">Mission Control Secure</h3>
-                   <p className="text-gray-400 font-bold text-xs uppercase mt-2">No active emergencies detected in your sector.</p>
+              {alerts.filter(a => a.status !== 'Resolved').length === 0 && (
+                <div className="bg-white p-20 rounded-[3rem] border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400">
+                  <ShieldCheck size={80} className="mb-4 opacity-20" />
+                  <p className="text-xl font-bold">No active alerts in your sector</p>
                 </div>
-              ) : (
-                alerts.filter(a => a.status !== 'Resolved').map((alert) => (
-                  <div key={alert._id} className={`bg-white p-8 rounded-[2.5rem] shadow-xl border-l-8 transition-all ${alert.type === 'SOS' ? 'border-l-red-600 animate-pulse-subtle' : 'border-l-blue-500'} flex flex-col md:flex-row gap-8`}>
+              )}
+              {alerts.filter(a => a.status !== 'Resolved').map((alert) => (
+                <div key={alert._id} className={`bg-white p-8 rounded-[2.5rem] shadow-xl border-l-8 transition-all ${alert.type === 'SOS' ? 'border-l-red-600 animate-pulse-subtle' : 'border-l-blue-500'} flex flex-col md:flex-row gap-8`}>
                   <div className="flex-1 space-y-4">
-                    <div className="flex items-center justify-between">
-                       <LiveResponseTimer createdAt={alert.createdAt} resolvedAt={alert.resolvedAt} status={alert.status} />
-                       <div className="flex items-center gap-2">
-                          <span className="text-gray-300 font-bold text-[10px]">ID: {alert._id.slice(-6).toUpperCase()}</span>
-                       </div>
-                    </div>
-
                     <div className="flex items-center gap-3">
                       <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase ${
                         alert.status === 'Pending' ? 'bg-red-100 text-red-600' :
@@ -193,20 +181,9 @@ const DepartmentDashboard = () => {
                         {alert.status}
                       </span>
                       <span className="text-gray-300 font-bold text-xs">ID: {alert._id.slice(-6).toUpperCase()}</span>
-                      
-                      {/* AI PRIORITY BADGE */}
-                      <span className={`px-4 py-1 rounded-full text-[10px] font-black tracking-widest ${
-                        alert.priority === 'HIGH' ? 'bg-red-600 text-white shadow-lg shadow-red-200' :
-                        alert.priority === 'LOW' ? 'bg-gray-100 text-gray-500' :
-                        'bg-orange-100 text-orange-600'
-                      }`}>
-                        PRIORITY: {alert.priority || 'MEDIUM'}
-                      </span>
-
-                      {/* SPAM WARNING */}
-                      {alert.isSpam && (
-                        <span className="bg-orange-600 text-white text-[10px] font-black px-3 py-1 rounded-full flex items-center gap-1 animate-pulse">
-                          <AlertCircle size={14} /> POTENTIAL SPAM
+                      {alert.triageLevel >= 4 && (
+                        <span className="flex items-center gap-1 bg-red-600 text-white px-3 py-1 rounded-full text-[10px] font-bold">
+                          <AlertCircle size={12} /> CRITICAL
                         </span>
                       )}
                     </div>
@@ -216,56 +193,7 @@ const DepartmentDashboard = () => {
                         {alert.type} Incident
                       </h2>
                       <p className="text-gray-600 mt-2 font-medium leading-relaxed">{alert.description || 'No description provided.'}</p>
-                      
-                      {/* AI ANALYSIS SUMMARY */}
-                      {alert.aiAnalysis && !alert.isSpam && (
-                         <div className="mt-4 flex flex-wrap gap-2">
-                            {alert.aiAnalysis.analysis?.hasMedical && <span className="bg-blue-50 text-blue-600 text-[10px] font-black px-2 py-1 rounded-md uppercase border border-blue-100">AI: Medical Emergency</span>}
-                            {alert.aiAnalysis.analysis?.hasFire && <span className="bg-red-50 text-red-600 text-[10px] font-black px-2 py-1 rounded-md uppercase border border-red-100">AI: Fire Threat</span>}
-                            {alert.aiAnalysis.analysis?.hasAccident && <span className="bg-orange-50 text-orange-600 text-[10px] font-black px-2 py-1 rounded-md uppercase border border-orange-100">AI: Road Accident</span>}
-                            {alert.aiAnalysis.analysis?.hasCrime && <span className="bg-purple-50 text-purple-600 text-[10px] font-black px-2 py-1 rounded-md uppercase border border-purple-100">AI: Security Threat</span>}
-                         </div>
-                      )}
                     </div>
-                    {/* EVIDENCE HUB: PHOTOS, VIDEOS, VOICE NOTES */}
-                    {alert.mediaUrls && alert.mediaUrls.length > 0 && (
-                      <div className="pt-4 border-t border-gray-50">
-                        <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest block mb-3">Field Evidence Hub</span>
-                        <div className="flex flex-wrap gap-4">
-                          {alert.mediaUrls.map((url, idx) => {
-                            const isVoice = url.includes('blob:') || url.includes('voice');
-                            const isVideo = url.toLowerCase().endsWith('.mp4') || url.includes('video');
-                            
-                            if (isVoice) {
-                              return (
-                                <div key={idx} className="bg-gray-50 p-3 rounded-2xl flex items-center gap-3 border border-gray-100 w-full md:w-auto">
-                                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white animate-pulse">
-                                      <Mic size={14} />
-                                   </div>
-                                   <audio src={url} controls className="h-8 max-w-[200px]" />
-                                </div>
-                              );
-                            }
-                            
-                            return (
-                              <div key={idx} className="relative group cursor-pointer">
-                                <img 
-                                  src={url} 
-                                  className="w-24 h-24 rounded-2xl object-cover border-2 border-white shadow-md group-hover:scale-105 transition-all" 
-                                  alt="evidence"
-                                />
-                                {isVideo && (
-                                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-2xl">
-                                    <div className="bg-white/90 p-2 rounded-full"><Activity size={16} className="text-red-600" /></div>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t border-gray-50">
                       <div className="flex flex-col">
                         <span className="text-[10px] text-gray-400 font-bold uppercase">Reporter</span>
@@ -281,38 +209,19 @@ const DepartmentDashboard = () => {
                       </div>
                     </div>
                   </div>
-                    <div className="flex flex-col gap-3 min-w-[220px]">
-                      <button 
-                        onClick={() => window.open(`https://www.google.com/maps?q=${alert.location.lat},${alert.location.lng}`)} 
-                        className="py-4 bg-gray-900 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg"
-                      >
-                        <MapPin size={18} /> GPS NAVIGATION
-                      </button>
-                      
-                      <button 
-                        onClick={() => setViewingTimeline(viewingTimeline === alert._id ? null : alert._id)}
-                        className={`py-3 rounded-2xl font-black text-xs flex items-center justify-center gap-2 transition-all border-2 ${
-                          viewingTimeline === alert._id ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 border-blue-50 hover:bg-blue-50'
-                        }`}
-                      >
-                        <Clock size={16} /> {viewingTimeline === alert._id ? 'HIDE HISTORY' : 'VIEW AUDIT TRAIL'}
-                      </button>
-
-                      {alert.status === 'Pending' && <button onClick={() => updateStatus(alert._id, 'Accepted')} className="py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg shadow-red-100 hover:bg-red-700">ACCEPT MISSION</button>}
-                      {alert.status === 'Accepted' && <button onClick={() => updateStatus(alert._id, 'In Progress')} className="py-4 bg-orange-500 text-white rounded-2xl font-bold shadow-lg shadow-orange-100">START RESPONSE</button>}
-                      {alert.status === 'In Progress' && <button onClick={() => updateStatus(alert._id, 'Resolved')} className="py-4 bg-green-600 text-white rounded-2xl font-bold shadow-lg shadow-green-100">MARK RESOLVED</button>}
-                    </div>
+                  <div className="flex flex-col gap-3 min-w-[220px]">
+                    <button 
+                      onClick={() => window.open(`https://www.google.com/maps?q=${alert.location.lat},${alert.location.lng}`)} 
+                      className="py-4 bg-gray-900 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg"
+                    >
+                      <MapPin size={18} /> GPS NAVIGATION
+                    </button>
+                    {alert.status === 'Pending' && <button onClick={() => updateStatus(alert._id, 'Accepted')} className="py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg shadow-red-100 hover:bg-red-700">ACCEPT MISSION</button>}
+                    {alert.status === 'Accepted' && <button onClick={() => updateStatus(alert._id, 'In Progress')} className="py-4 bg-orange-500 text-white rounded-2xl font-bold shadow-lg shadow-orange-100">START RESPONSE</button>}
+                    {alert.status === 'In Progress' && <button onClick={() => updateStatus(alert._id, 'Resolved')} className="py-4 bg-green-600 text-white rounded-2xl font-bold shadow-lg shadow-green-100">MARK RESOLVED</button>}
                   </div>
-
-                  {/* TIMELINE PLAYBACK EXPANSION */}
-                  {viewingTimeline === alert._id && (
-                    <div className="mt-6 pt-6 border-t border-gray-100 animate-in slide-in-from-top-4 duration-300">
-                       <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Chronological Mission Logs</h4>
-                       <TimelinePlayback timeline={alert.timeline} />
-                    </div>
-                  )}
-                ))
-              )}
+                </div>
+              ))}
             </div>
           )}
 

@@ -7,40 +7,47 @@ const OneTapSOS = () => {
   const [status, setStatus] = useState(null);
 
   const handleSOS = async () => {
-    setLoading(true);
-    setStatus('requesting_location');
+    const sendSOS = async (lat = 20.5937, lng = 78.9629, state = 'Gujarat') => {
+      try {
+        setStatus('sending_alert');
+        await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/create`, {
+          reporterName: 'SOS User',
+          reporterPhone: 'Unknown',
+          type: 'SOS',
+          description: 'ONE-TAP SOS TRIGGERED (URGENT RESPONSE)',
+          location: { lat, lng },
+          state: state,
+          triageLevel: 5
+        });
+        setStatus('success');
+        setTimeout(() => setStatus(null), 5000);
+      } catch (error) {
+        setStatus('error');
+      } finally {
+        setLoading(false);
+      }
+    };
 
     if (!navigator.geolocation) {
-      setStatus('geo_not_supported');
-      setLoading(false);
+      await sendSOS();
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
+        let detectedState = 'Gujarat';
         try {
-          setStatus('sending_alert');
-          await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/create`, {
-            reporterName: 'SOS User',
-            reporterPhone: 'Unknown',
-            type: 'SOS',
-            description: 'ONE-TAP SOS TRIGGERED',
-            location: { lat: latitude, lng: longitude },
-            triageLevel: 5
-          });
-          setStatus('success');
-          setTimeout(() => setStatus(null), 5000);
-        } catch (error) {
-          setStatus('error');
-        } finally {
-          setLoading(false);
-        }
+          const { data } = await axios.get(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+          detectedState = data.address.state || 'Gujarat';
+        } catch (e) {}
+        await sendSOS(latitude, longitude, detectedState);
       },
-      (error) => {
-        setStatus('geo_error');
-        setLoading(false);
-      }
+      async (error) => {
+        // Fallback to Gujarat if location fails
+        await sendSOS();
+      },
+      { timeout: 5000 }
     );
   };
 

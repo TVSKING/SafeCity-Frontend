@@ -21,49 +21,6 @@ let DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const DangerHeatmap = ({ alerts }) => {
-  if (!alerts || alerts.length === 0) return null;
-
-  // Group alerts into 1km clusters
-  const clusters = [];
-  const PROXIMITY_THRESHOLD = 0.01; // Approx 1km in lat/lng
-
-  alerts.forEach(alert => {
-    let addedToCluster = false;
-    for (let cluster of clusters) {
-      const dist = Math.sqrt(
-        Math.pow(alert.location.lat - cluster.lat, 2) + 
-        Math.pow(alert.location.lng - cluster.lng, 2)
-      );
-      if (dist < PROXIMITY_THRESHOLD) {
-        cluster.count++;
-        addedToCluster = true;
-        break;
-      }
-    }
-    if (!addedToCluster) {
-      clusters.push({ lat: alert.location.lat, lng: alert.location.lng, count: 1 });
-    }
-  });
-
-  return (
-    <>
-      {clusters.map((c, i) => (
-        <Circle 
-          key={`heat-${i}`}
-          center={[c.lat, c.lng]}
-          radius={c.count >= 3 ? 1000 : 600}
-          pathOptions={{
-            color: 'transparent',
-            fillColor: c.count >= 3 ? '#ff0000' : '#ffcc00',
-            fillOpacity: c.count >= 3 ? 0.3 : 0.2
-          }}
-        />
-      ))}
-    </>
-  );
-};
-
 const HazardMap = ({ stateFilter = null, showIncidents = false, onUpdateStatus = null }) => {
   const [hazards, setHazards] = useState([]);
   const [alerts, setAlerts] = useState([]);
@@ -246,7 +203,6 @@ const HazardMap = ({ stateFilter = null, showIncidents = false, onUpdateStatus =
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <RecenterMap center={mapCenter} zoom={zoom} />
         <MapEvents />
-        <DangerHeatmap alerts={alerts} />
         
         {hazards.map((h, i) => (
           <React.Fragment key={i}>

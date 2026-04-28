@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import MapSelector from './MapSelector';
 import AITriage from './AITriage';
-import { Send, Phone, User as UserIcon, MessageSquare, AlertTriangle, CheckCircle2, Bot, Image as ImageIcon, Mic, Zap, Languages, Activity, MapPin, ShieldCheck, Clock, Download } from 'lucide-react';
+import { Send, Phone, User as UserIcon, MessageSquare, AlertTriangle, CheckCircle2, Bot, Image as ImageIcon, Mic, Zap, Languages, Activity, MapPin, ShieldCheck, Clock } from 'lucide-react';
 import { sanitizeInput } from '../utils/validation';
-import { saveReportOffline, generateSMSText, getOfflineReports, syncOfflineReports } from '../utils/disasterMode';
 
 const EmergencyForm = () => {
   const [formData, setFormData] = useState({
@@ -25,9 +24,6 @@ const EmergencyForm = () => {
   const [aiClassification, setAiClassification] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
-  const [offlineSaved, setOfflineSaved] = useState(false);
-  const [pendingSyncCount, setPendingSyncCount] = useState(getOfflineReports().length);
 
   // Natural Language Triage Logic
   const handleDescriptionChange = (e) => {
@@ -57,95 +53,29 @@ const EmergencyForm = () => {
     }
   };
 
-  const [mediaRecorder, setMediaRecorder] = useState(null);
-  const [audioChunks, setAudioChunks] = useState([]);
-
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewImage(reader.result);
-        const isVideo = file.type.startsWith('video/');
-        
-        // 🤖 AI INTELLIGENCE SCAN (Future Scope: Fire/Smoke Detection)
+        // Simulate AI Damage Assessment
         setTimeout(() => {
-          const assessments = isVideo ? ['Severe Smoke Detected', 'Moving Fire Front'] : ['Minor Damage', 'Structural Damage', 'Total Collapse'];
+          const assessments = ['Minor Damage', 'Structural Damage', 'Total Collapse'];
           setAiClassification(assessments[Math.floor(Math.random() * assessments.length)]);
-          setStatus({ type: 'success', message: `AI Analysis: ${isVideo ? 'Video' : 'Photo'} processed for responders.` });
         }, 1500);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const [isListening, setIsListening] = useState(false);
-
-  const startVoiceSOS = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert('Voice SOS is not supported in this browser. Please use the text field.');
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'en-IN';
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    recognition.onstart = () => {
-      setIsListening(true);
-      setStatus({ type: 'success', message: '🎙️ SafeCity is listening... Speak clearly.' });
-    };
-
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      handleDescriptionChange({ target: { value: transcript } });
-      setStatus({ type: 'success', message: '✅ Voice Captured! AI is analyzing your situation...' });
-      
-      // Auto-submit after 3 seconds if we have enough info
-      if (transcript.length > 5) {
-        setTimeout(() => {
-          document.getElementById('emergency-form-submit')?.click();
-        }, 3000);
-      }
-    };
-
-    recognition.onerror = () => {
-      setIsListening(false);
-      setStatus({ type: 'error', message: 'Voice recognition failed. Please try typing.' });
-    };
-
-    recognition.onend = () => setIsListening(false);
-    recognition.start();
-  };
-
-  const toggleRecording = async () => {
+  const toggleRecording = () => {
+    setIsRecording(!isRecording);
     if (!isRecording) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const recorder = new MediaRecorder(stream);
-        setMediaRecorder(recorder);
-        
-        const chunks = [];
-        recorder.ondataavailable = (e) => chunks.push(e.data);
-        recorder.onstop = () => {
-          const blob = new Blob(chunks, { type: 'audio/ogg; codecs=opus' });
-          const audioUrl = URL.createObjectURL(blob);
-          setFormData(prev => ({ ...prev, mediaUrls: [...prev.mediaUrls, audioUrl] }));
-          setStatus({ type: 'success', message: 'Voice Note Captured Successfully!' });
-        };
-
-        recorder.start();
-        setIsRecording(true);
-        setAudioChunks(chunks);
-      } catch (err) {
-        alert('Microphone access denied. Please enable it to record voice notes.');
-      }
-    } else {
-      mediaRecorder.stop();
-      setIsRecording(false);
-      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      setTimeout(() => {
+        setIsRecording(false);
+        setFormData(prev => ({ ...prev, mediaUrls: [...prev.mediaUrls, 'voice_note_mock_url'] }));
+      }, 3000);
     }
   };
 
@@ -182,61 +112,27 @@ const EmergencyForm = () => {
       fetchStateFromCoords(formData.location.lat, formData.location.lng);
     }
   }, [formData.location]);
-  useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  const handleSync = async () => {
-    setLoading(true);
-    const { synced } = await syncOfflineReports(axios);
-    setPendingSyncCount(getOfflineReports().length);
-    setLoading(false);
-    if (synced > 0) {
-      setStatus({ type: 'success', message: `Successfully synced ${synced} offline reports!` });
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
-    const dataToSubmit = {
-      ...formData,
-      state: detectedState || "Unknown State",
-      aiAssessment: aiClassification,
-      timestamp: new Date().toISOString()
-    };
-
-    if (isOffline) {
-      saveReportOffline(dataToSubmit);
-      setOfflineSaved(true);
-      setPendingSyncCount(getOfflineReports().length);
-      setLoading(false);
-      setStatus({ type: 'success', message: 'OFFLINE MODE: Report saved to device memory. Please use SMS fallback below.' });
-      return;
-    }
-
     try {
+      const dataToSubmit = {
+        ...formData,
+        state: detectedState || "Unknown State", // Fallback to avoid required field failure
+        aiAssessment: aiClassification,
+        timestamp: new Date().toISOString()
+      };
       const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
       await axios.post(`${baseUrl}/api/alerts/create`, dataToSubmit);
       
       setStatus({ type: 'success', message: 'Report Submitted Successfully!' });
-      // Reset form...
+      // Clear form...
     } catch (error) {
       console.error('Submission error:', error.response?.data || error.message);
-      saveReportOffline(dataToSubmit); // Fallback to offline save even on server error
-      setOfflineSaved(true);
-      setPendingSyncCount(getOfflineReports().length);
       setStatus({ 
         type: 'error', 
-        message: 'Network error. Report saved to device for later sync.' 
+        message: `Submission failed: ${error.response?.data?.message || error.message}` 
       });
     } finally {
       setLoading(false);
@@ -271,33 +167,20 @@ const EmergencyForm = () => {
     <div className={`glass p-8 rounded-3xl max-w-4xl mx-auto border-red-100 shadow-2xl relative overflow-hidden transition-all duration-500 ${isLowPower ? 'grayscale invert bg-black' : ''}`}>
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 via-orange-500 to-red-600 animate-gradient-x"></div>
 
-      {/* Pending Sync Banner */}
-      {pendingSyncCount > 0 && (
-        <div className="mb-6 p-4 bg-blue-600 text-white rounded-2xl flex justify-between items-center animate-in slide-in-from-top-4">
-           <div className="flex items-center gap-2">
-              <Download size={18} className="animate-bounce" />
-              <span className="font-bold text-sm uppercase tracking-widest">{pendingSyncCount} REPORTS PENDING SYNC</span>
-           </div>
-           <button onClick={handleSync} className="px-4 py-1.5 bg-white text-blue-600 rounded-lg font-black text-[10px] hover:bg-gray-100 transition-all">
-              SYNC NOW
-           </button>
-        </div>
-      )}
-
       {/* Header */}
       <div className="flex justify-between items-start mb-8">
         <div className="text-left">
           <h2 className="text-3xl font-black text-gray-900 flex items-center gap-3">
             <AlertTriangle className="text-red-600 animate-pulse" />
-            {isOffline ? 'Offline Disaster Report' : 'Crisis Report'}
+            Crisis Report
           </h2>
-          <p className="text-gray-500 font-medium">Smart Triage & Disaster Mode Active</p>
+          <p className="text-gray-500 font-medium">Smart Triage & Multimodal Reporting</p>
         </div>
         <button
           onClick={() => setIsLowPower(!isLowPower)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-xs transition-all ${isLowPower ? 'bg-white text-black ring-4 ring-black/5' : 'bg-gray-100 text-gray-600'}`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-xs transition-all ${isLowPower ? 'bg-white text-black' : 'bg-gray-100 text-gray-600'}`}
         >
-          <Zap size={14} className={isLowPower ? 'fill-black' : ''} /> {isLowPower ? 'LOW-BANDWIDTH ACTIVE' : 'LOW POWER MODE'}
+          <Zap size={14} /> {isLowPower ? 'NORMAL MODE' : 'LOW POWER SOS'}
         </button>
       </div>
 
@@ -354,12 +237,9 @@ const EmergencyForm = () => {
                 <option value="Accident">💥 Accident</option>
               </select>
             </div>
-            <div className="relative flex flex-col justify-end gap-2">
+            <div className="relative flex flex-col justify-end">
               <button type="button" onClick={() => setShowTriage(true)} className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all text-xs shadow-lg shadow-blue-100">
                 <Bot size={16} /> AI TRIAGE
-              </button>
-              <button type="button" onClick={startVoiceSOS} className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-black transition-all text-xs shadow-xl ${isListening ? 'bg-red-600 text-white animate-pulse' : 'bg-white text-red-600 border border-red-100 hover:bg-red-50'}`}>
-                <Mic size={16} /> {isListening ? 'LISTENING...' : 'VOICE SOS'}
               </button>
             </div>
           </div>
@@ -428,37 +308,25 @@ const EmergencyForm = () => {
 
           <button
             type="submit"
-            id="emergency-form-submit"
-            disabled={loading || (!isOffline && !detectedState)}
+            disabled={loading || !detectedState}
             className={`w-full py-4 rounded-[1.5rem] font-black text-lg shadow-2xl transition-all active:scale-95 flex flex-col items-center justify-center gap-0 ${
-              loading ? 'bg-gray-400 cursor-not-allowed' : 
-              isOffline ? 'bg-orange-600 hover:bg-orange-700 shadow-orange-200' :
-              'bg-red-600 hover:bg-red-700 shadow-red-200'
-            } text-white`}
+              loading || !detectedState ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 shadow-red-200'
+            }`}
           >
-            {loading ? 'PROCESSING...' : (isOffline ? 'SAVE REPORT OFFLINE' : 'SUBMIT CRISIS REPORT')}
-            <span className="text-[10px] opacity-80 font-bold uppercase tracking-widest">
-              {isOffline ? 'Store & Forward Mode Active' : 'Real-time Satellite Sync'}
-            </span>
+            {loading ? (
+              <span className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></span>
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  <Send className="w-5 h-5" />
+                  {detectedState ? 'REPORT NOW' : 'SELECT LOCATION'}
+                </div>
+                <span className="text-[10px] opacity-60 font-bold uppercase tracking-widest">
+                  {detectedState ? `Priority Broadcast Level ${formData.triageLevel}` : 'Waiting for Map Selection'}
+                </span>
+              </>
+            )}
           </button>
-
-          {/* SMS FALLBACK UI */}
-          {offlineSaved && (
-             <div className="p-6 bg-red-600 rounded-[2.5rem] text-white shadow-xl shadow-red-200 animate-in slide-in-from-bottom-4">
-                <h4 className="font-black text-xs uppercase tracking-wider mb-2 flex items-center gap-2">
-                   <Phone size={16} /> SMS FALLBACK READY
-                </h4>
-                <p className="text-[10px] font-bold opacity-90 mb-4 leading-relaxed">
-                   Report saved locally. If internet is out, tap below to send a pre-filled SOS text.
-                </p>
-                <a 
-                  href={`sms:108?body=${encodeURIComponent(generateSMSText(formData))}`}
-                  className="w-full py-4 bg-white text-red-600 rounded-2xl font-black text-xs flex items-center justify-center gap-2 hover:bg-gray-100 transition-all shadow-lg"
-                >
-                   <Send size={14} /> SEND SOS VIA SMS
-                </a>
-             </div>
-          )}
 
           <div className="flex items-center justify-center gap-4 py-2 opacity-40 grayscale">
             <img src="https://upload.wikimedia.org/wikipedia/commons/b/bd/Google_Maps_Logo_2020.svg" className="h-4" alt="Google Maps" />

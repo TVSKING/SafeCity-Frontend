@@ -6,8 +6,6 @@ import OneTapSOS from '../components/OneTapSOS';
 import PublicHazardMap from '../components/PublicHazardMap';
 import OfflineFirstAid from '../components/OfflineFirstAid';
 import RouteScanner from '../components/RouteScanner';
-import CommunitySOS from '../components/CommunitySOS';
-import PredictiveRisk from '../components/PredictiveRisk';
 import { ShieldCheck, MapPin, Zap, HeartPulse, Flame, Siren, AlertTriangle, Radio, BookOpen, ShieldAlert } from 'lucide-react';
 
 
@@ -22,8 +20,9 @@ const Home = () => {
   const [pulseStatus, setPulseStatus] = useState('Safe');
   const [liveMessages, setLiveMessages] = useState([]);
   const [activeProtocols, setActiveProtocols] = useState([]);
-  const [alerts, setAlerts] = useState([]);
   const [isFirstAidOpen, setIsFirstAidOpen] = useState(false);
+  const [isRouteScannerOpen, setIsRouteScannerOpen] = useState(false);
+  const prevResponsesRef = useRef(0);
 
   useEffect(() => {
     const fetchPulses = async () => {
@@ -41,16 +40,8 @@ const Home = () => {
       } catch (err) { console.error(err); }
     };
 
-    const fetchAlerts = async () => {
-      try {
-        const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/admin`);
-        setAlerts(data);
-      } catch (err) { console.error(err); }
-    };
-
     fetchPulses();
     fetchProtocols();
-    fetchAlerts();
 
     socket.on('newSafetyCheck', (newCheck) => {
       setActivePulse(newCheck);
@@ -97,7 +88,7 @@ const Home = () => {
     e.preventDefault();
     if (!pulseName || !pulseAge || !activePulse) return;
     try {
-      await axios.post(`$(import.meta.env.VITE_API_URL || "http://localhost:5000")/api/admin-tools/safety-checks/${activePulse._id}/respond`, {
+      await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin-tools/safety-checks/${activePulse._id}/respond`, {
         name: pulseName, age: pulseAge, status: pulseStatus
       });
       setPulseName('');
@@ -139,11 +130,6 @@ const Home = () => {
                ))}
             </div>
           )}
-
-          {/* Predictive Risk Forecast (Oracle AI) */}
-          <div className="mb-12 max-w-4xl mx-auto px-4">
-             <PredictiveRisk alerts={alerts} />
-          </div>
 
           {activePulse && (
              <div className="mb-12 max-w-4xl mx-auto relative">
@@ -235,7 +221,7 @@ const Home = () => {
           </div>
 
           {/* Live Hazard Map Section */}
-          <div className="max-w-6xl mx-auto mb-10">
+          <div className="max-w-6xl mx-auto mb-20">
              <div className="text-center mb-10">
                 <h2 className="text-4xl font-black text-gray-900 mb-2 flex items-center justify-center gap-3">
                    <AlertTriangle className="text-red-600" /> Dynamic Hazard Map
@@ -243,11 +229,6 @@ const Home = () => {
                 <p className="text-gray-500 font-medium">Real-time "No-Go" zones identified by city command. Avoid these areas.</p>
              </div>
              <PublicHazardMap />
-          </div>
-
-          {/* Community Response Layer */}
-          <div className="max-w-4xl mx-auto mb-20 px-4">
-             <CommunitySOS />
           </div>
 
           <div id="report-section" className="relative z-10 mb-20">

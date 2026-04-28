@@ -7,7 +7,6 @@ import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Send, Zap } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
-import { validatePathSafety, getOptimizedRouteURL } from '../utils/routeOptimizer';
 
 const createVehicleIcon = (type) => {
   let emoji = '🚚';
@@ -39,15 +38,15 @@ const LiveDispatchMap = () => {
   const [deployments, setDeployments] = useState([]);
   const [selectedResource, setSelectedResource] = useState('');
   const [deployQty, setDeployQty] = useState(1);
-  const [routeWarning, setRouteWarning] = useState(null);
 
   useEffect(() => {
     const fetchHazards = async () => {
       try {
         const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin-tools/hazards`);
-        // Filter hazards by user's state
+        // FUZZY STATE FILTER: Ignore casing
         if (user && user.state) {
-          setHazards(data.filter(h => h.state === user.state));
+          const uState = user.state.trim().toLowerCase();
+          setHazards(data.filter(h => (h.state || '').trim().toLowerCase() === uState));
         } else {
           setHazards(data);
         }
@@ -71,8 +70,13 @@ const LiveDispatchMap = () => {
     fetchResources();
 
     socket.on('newDeployment', (dep) => {
-       // Only show deployments in our state
-       if (user && user.state && dep.state === user.state) {
+       // FUZZY STATE FILTER: Ignore casing
+       if (user && user.state && dep.state) {
+          if (dep.state.trim().toLowerCase() === user.state.trim().toLowerCase()) {
+             dep.startTime = Date.now();
+             setDeployments(prev => [...prev, dep]);
+          }
+       } else {
           dep.startTime = Date.now();
           setDeployments(prev => [...prev, dep]);
        }
@@ -111,39 +115,43 @@ const LiveDispatchMap = () => {
     'Malaviya Nagar Main Road, Rajkot': { lat: 22.2800, lng: 70.7960 },
     '150 Ring Road, Rajkot': { lat: 22.2825, lng: 70.7681 },
     'Kalawad Road, Rajkot': { lat: 22.2855, lng: 70.7715 },
-    'SafeCity HQ, Rajkot': { lat: 22.3039, lng: 70.8022 }
+    'SafeCity HQ': { lat: 20.5937, lng: 78.9629 }
   };
-
 
   const triggerDeploy = async (hazard) => {
     const resource = resources.find(r => r._id === selectedResource);
     if (!resource) return alert('Please select a resource');
     if (deployQty > resource.quantity) return alert('Not enough units available');
 
-    // 🗺️ STRATEGIC ROUTE VALIDATION
     try {
-      let startLat = 20.5937, startLng = 78.9629; // Fallback India Center
-    
-    // Determine start point (Station/HQ)
-    if (user && user.address && knownLocations[user.address]) {
-      startLat = knownLocations[user.address].lat;
-      startLng = knownLocations[user.address].lng;
-    } else {
-      startLat = hazard.location.lat - 0.05;
-      startLng = hazard.location.lng - 0.05;
-    }
+      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const token = localStorage.getItem('token');
+      await axios.put(`${baseUrl}/api/resources/update/${resource._id}`, { quantity: resource.quantity - deployQty }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setResources(resources.map(r => r._id === resource._id ? { ...r, quantity: r.quantity - deployQty } : r));
 
-    const pathValidation = validatePathSafety(
-      { lat: startLat, lng: startLng },
-      hazard.location,
-      hazards
-    );
+      let startLat = 20.5937; // Default HQ
+      let startLng = 78.9629; // Default HQ
 
-    if (!pathValidation.isSafe) {
-      const conflictNames = pathValidation.conflicts.map(c => c.title).join(', ');
-      setRouteWarning(`⚠️ STRATEGIC WARNING: Deployment path is blocked by ${conflictNames}. Rerouting via secondary streets.`);
-      setTimeout(() => setRouteWarning(null), 8000);
-    }
+      if (user && user.address) {
+         if (knownLocations[user.address]) {
+            startLat = knownLocations[user.address].lat;
+            startLng = knownLocations[user.address].lng;
+         } else {
+            try {
+               const { data: geoData } = await axios.get(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(user.address)}&format=json&limit=1`, {
+                 headers: { 'Accept-Language': 'en-US,en;q=0.9' }
+               });
+               if (geoData && geoData.length > 0) {
+                  startLat = parseFloat(geoData[0].lat);
+                  startLng = parseFloat(geoData[0].lon);
+               }
+            } catch (geoErr) {
+               console.warn('Geocoding failed, falling back to HQ', geoErr);
+            }
+         }
+      }
 
       const newDeployment = {
         id: Date.now() + Math.random(),
