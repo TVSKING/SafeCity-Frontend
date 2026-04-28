@@ -4,6 +4,8 @@ import io from 'socket.io-client';
 import EmergencyForm from '../components/EmergencyForm';
 import OneTapSOS from '../components/OneTapSOS';
 import PublicHazardMap from '../components/PublicHazardMap';
+import OfflineFirstAid from '../components/OfflineFirstAid';
+import RouteScanner from '../components/RouteScanner';
 import { ShieldCheck, MapPin, Zap, HeartPulse, Flame, Siren, AlertTriangle, Radio, BookOpen, ShieldAlert } from 'lucide-react';
 
 
@@ -18,6 +20,8 @@ const Home = () => {
   const [pulseStatus, setPulseStatus] = useState('Safe');
   const [liveMessages, setLiveMessages] = useState([]);
   const [activeProtocols, setActiveProtocols] = useState([]);
+  const [isFirstAidOpen, setIsFirstAidOpen] = useState(false);
+  const [isRouteScannerOpen, setIsRouteScannerOpen] = useState(false);
   const prevResponsesRef = useRef(0);
 
   useEffect(() => {
@@ -231,55 +235,12 @@ const Home = () => {
             <EmergencyForm />
           </div>
 
-          {/* Safe-Zone Navigator */}
-          <div className="max-w-5xl mx-auto mb-20">
-             <div className="flex items-center justify-between mb-8">
-                <div>
-                   <h2 className="text-3xl font-black text-gray-900">Safe-Zone Navigator</h2>
-                   <p className="text-gray-500 font-medium">Real-time status of nearest emergency hubs</p>
-                </div>
-                <div className="flex items-center gap-2 text-green-600 font-bold bg-green-50 px-4 py-2 rounded-full text-xs">
-                   <div className="w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
-                   LIVE STATUS
-                </div>
-             </div>
-             
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[
-                  { name: 'Civil Shelter A', type: 'SHELTER', dist: '0.8km', occupancy: '45%', status: 'Available', icon: MapPin, color: 'blue' },
-                  { name: 'Sterling Medical', type: 'HOSPITAL', dist: '1.2km', occupancy: '98%', status: 'Full', icon: HeartPulse, color: 'red' },
-                  { name: 'Mochi Fire Hub', type: 'RESCUE', dist: '2.5km', occupancy: '12%', status: 'Active', icon: Flame, color: 'orange' },
-                  { name: 'Community Hall 4', type: 'SHELTER', dist: '3.1km', occupancy: '60%', status: 'Available', icon: MapPin, color: 'green' }
-                ].map((hub, i) => (
-                  <div key={i} className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 hover:border-red-100 transition-all group">
-                     <div className={`w-12 h-12 rounded-2xl bg-${hub.color}-50 flex items-center justify-center text-${hub.color}-600 mb-4 group-hover:scale-110 transition-transform`}>
-                        <hub.icon size={24} />
-                     </div>
-                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{hub.type}</p>
-                     <h4 className="font-bold text-gray-900 mb-1">{hub.name}</h4>
-                     
-                     <div className="mt-4 mb-2">
-                        <div className="flex justify-between text-[8px] font-black uppercase mb-1">
-                           <span className="text-gray-400">Occupancy</span>
-                           <span className={parseInt(hub.occupancy) > 80 ? 'text-red-500' : 'text-green-500'}>{hub.occupancy}</span>
-                        </div>
-                        <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
-                           <div className={`h-full transition-all duration-1000 ${parseInt(hub.occupancy) > 80 ? 'bg-red-500' : 'bg-green-500'}`} style={{ width: hub.occupancy }}></div>
-                        </div>
-                     </div>
-
-                     <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-50">
-                        <span className="text-xs font-bold text-gray-400">{hub.dist}</span>
-                        <span className={`text-[10px] font-black uppercase ${hub.status === 'Full' ? 'text-red-500' : 'text-green-500'}`}>{hub.status}</span>
-                     </div>
-                  </div>
-                ))}
-
-             </div>
-          </div>
           {/* Resilience Layer Section */}
           <div className="max-w-5xl mx-auto mb-20 grid grid-cols-1 md:grid-cols-2 gap-8">
-             <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-gray-100 flex items-center gap-6 group hover:border-red-100 transition-all">
+             <div 
+               onClick={() => setIsFirstAidOpen(true)}
+               className="bg-white p-8 rounded-[3rem] shadow-xl border border-gray-100 flex items-center gap-6 group hover:border-red-100 transition-all cursor-pointer active:scale-95"
+             >
                 <div className="w-20 h-20 bg-red-50 rounded-[2rem] flex items-center justify-center text-red-600 group-hover:rotate-12 transition-transform shrink-0">
                    <BookOpen size={40} />
                 </div>
@@ -292,19 +253,25 @@ const Home = () => {
                 </div>
              </div>
 
-             <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-gray-100 flex items-center gap-6 group hover:border-blue-100 transition-all">
+             <div 
+               onClick={() => setIsRouteScannerOpen(true)}
+               className="bg-white p-8 rounded-[3rem] shadow-xl border border-gray-100 flex items-center gap-6 group hover:border-blue-100 transition-all cursor-pointer active:scale-95"
+             >
                 <div className="w-20 h-20 bg-blue-50 rounded-[2rem] flex items-center justify-center text-blue-600 group-hover:rotate-12 transition-transform shrink-0">
                    <MapPin size={40} />
                 </div>
                 <div>
                    <h3 className="text-xl font-black text-gray-900">Route Validation</h3>
-                   <p className="text-sm text-gray-500 font-medium">Crowdsourced road status. Mark blocked or flooded paths for others.</p>
+                   <p className="text-sm text-gray-500 font-medium">Scan your destination against live hazard zones to verify safety.</p>
                    <button className="mt-4 text-xs font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
-                      Report Blockage <Zap size={12} className="fill-blue-600" />
+                      Scan Path <Zap size={12} className="fill-blue-600" />
                    </button>
                 </div>
              </div>
           </div>
+
+          <OfflineFirstAid isOpen={isFirstAidOpen} onClose={() => setIsFirstAidOpen(false)} />
+          <RouteScanner isOpen={isRouteScannerOpen} onClose={() => setIsRouteScannerOpen(false)} />
         </div>
       </div>
 
