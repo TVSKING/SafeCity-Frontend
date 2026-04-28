@@ -199,13 +199,17 @@ const LiveDispatchMap = () => {
                         
                         <div className="space-y-3">
                            <select 
-                              className="w-full bg-gray-100 p-2 rounded-lg font-bold text-sm"
+                              className="w-full bg-gray-100 p-2 rounded-lg font-bold text-sm outline-none border-2 border-gray-200 focus:border-red-500 transition-all"
                               value={selectedResource}
                               onChange={e => setSelectedResource(e.target.value)}
                            >
-                              {resources.map(r => (
-                                 <option key={r._id} value={r._id}>[{r.departmentType.toUpperCase()}] {r.name}</option>
-                              ))}
+                              {resources.length > 0 ? resources.map(r => (
+                                 <option key={r._id} value={r._id}>
+                                    {r.name} ({r.quantity} available)
+                                 </option>
+                              )) : (
+                                 <option disabled>No resources in database</option>
+                              )}
                            </select>
                            <input 
                               type="number" 
