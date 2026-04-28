@@ -27,10 +27,16 @@ const RouteScanner = ({ isOpen, onClose }) => {
       const destLng = parseFloat(geoData[0].lon);
 
       // 2. Fetch active hazards
-      const { data: hazards } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin-tools/hazards`);
+      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const { data: hazards } = await axios.get(`${baseUrl}/api/admin-tools/hazards`);
 
-      // 3. Check for proximity to hazards (within 2km of destination or 500m of the zone radius)
+      console.log(`Scanning destination: ${destLat}, ${destLng}. Found ${hazards.length} hazards.`);
+
+      // 3. Check for proximity to hazards with an expanded safety buffer (3km)
+      let nearestDist = Infinity;
       const dangerZone = hazards.find(h => {
+        if (!h.location || typeof h.location.lat !== 'number') return false;
+
         const R = 6371; // Earth radius in km
         const dLat = (h.location.lat - destLat) * Math.PI / 180;
         const dLng = (h.location.lng - destLng) * Math.PI / 180;
@@ -39,22 +45,29 @@ const RouteScanner = ({ isOpen, onClose }) => {
                   Math.sin(dLng/2) * Math.sin(dLng/2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         const distance = R * c * 1000; // Distance in meters
+        
+        if (distance < nearestDist) nearestDist = distance;
 
-        return distance <= (h.radius + 500); // Check if within zone radius + 500m buffer
+        // Trigger warning if within hazard radius + 3000m safety buffer
+        const detectionThreshold = (h.radius || 500) + 3000;
+        console.log(`Checking hazard "${h.title}" - Distance: ${Math.round(distance)}m, Threshold: ${detectionThreshold}m`);
+        
+        return distance <= detectionThreshold;
       });
 
       if (dangerZone) {
         setResult({
           status: 'danger',
           zone: dangerZone,
+          distance: Math.round(nearestDist),
           locationName: geoData[0].display_name.split(',')[0],
-          message: `DANGER: Your destination is within the ${dangerZone.title} hazard perimeter.`
+          message: `THREAT DETECTED: A ${dangerZone.type} zone is active within ${Math.round(nearestDist)}m of your destination.`
         });
       } else {
         setResult({
           status: 'safe',
           locationName: geoData[0].display_name.split(',')[0],
-          message: 'ROUTE VALIDATED: No active hazard zones detected at your destination.'
+          message: `ROUTE SECURE: Nearest recorded hazard is ${nearestDist === Infinity ? 'not detected' : Math.round(nearestDist/1000) + 'km+'} away.`
         });
       }
 
