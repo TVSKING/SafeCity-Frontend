@@ -14,9 +14,9 @@ const AddressScanner = ({ isOpen, onClose }) => {
     setResult(null);
 
     try {
-      // 1. Geocode the address (landmkark, building, pincode, etc.)
+      // 1. Geocode the address globally (landmark, building, pincode, etc.)
       const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-      const { data: geoData } = await axios.get(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1&countrycodes=in`);
+      const { data: geoData } = await axios.get(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`);
       
       if (geoData.length === 0) {
         setResult({ status: 'error', message: 'Address not recognized. Please provide a landmark, building name, or pincode.' });
